@@ -17,6 +17,21 @@ var vcitable; // name of artist cited throughout text
 var vsubject; // subject 1, 2 and 3 of paper
 var vsubject2;
 var vsubject3;
+var ideologies = [ 		"capitalism" , "Marxism" , "socialism" , "feminism"
+						, "libertarianism" , "objectivism" , "rationalism" , "nationalism"
+						, "nihilism" ];
+var artMovements = [ 	"surrealism" , "modernism" , "realism" , "social realism"
+						, "socialist realism" , "constructvism" , "expressionism"
+						/*, "futurism", "retrofuturism"*/ ];
+var citableArtists = [	"Burroughs" , "Joyce" , "Gibson"
+						, "Stone" , "Pynchon" , "Spelling" , "Tarantino" , "Madonna" 
+						, "Rushdie" , "Eco" ];
+var uncitableArtists = [ "Koons" , "Mapplethorpe" , "Glass" , "Lynch" , "Fellini" , "Cage" , "McLaren" ];
+var adjectivesThree = [	"structural" , "semiotic" , "modern" , "constructive" , "semantic"
+						, "deconstructive" , "patriarchial" , "conceptual" , "material" ];
+
+
+
 
 function trimE (str){
 	// consider making this a regular expression
@@ -60,30 +75,20 @@ function randomTitleTwo(){
 	
 }
 
+function randomArrayIndex(arr){
+	var index = Math.floor((Math.random() * arr.length));
+	return arr[index];
+	
 
+}
 
 function randomIdeology(){
-	var ideologies = [
-	"capitalism" , "Marxism" , "socialism" , "feminism"
-	, "libertarianism" , "objectivism" , "rationalism" , "nationalism"
-	, "nihilism"
-	];
+	return randomArrayIndex(ideologies);
 
-	var index = Math.floor((Math.random() * ideologies.length));
-
-	return ideologies[index];
 }
 
 function randomArtMovement(){
-	var ideologies = [
-	"surrealism" , "modernism" , "realism" , "social realism"
-	, "socialist realism" , "constructvism" , "expressionism"/*, "futurism",
-	"retrofuturism"*/
-	];
-
-	var index = Math.floor((Math.random() * ideologies.length));
-
-	return ideologies[index];
+	return randomArrayIndex(artMovement);
 
 
 }
@@ -97,27 +102,14 @@ function randomArtist(){
 }
 
 function randomCitableArtist(){
-	var artists = [
-	"Burroughs" , "Joyce" , "Gibson"
-	, "Stone" , "Pynchon" , "Spelling" , "Tarantino" , "Madonna" 
-	, "Rushdie" , "Eco" 
-	];
 
-	var index = Math.floor((Math.random() * artists.length));
-
-	return artists[index];
+	return randomArrayIndex(citableArtists);
 }
 
 function randomUncitableArtist(){
-	
-	var artists = [
-	"Koons" , "Mapplethorpe" , "Glass" , "Lynch" , "Fellini" 
-	, "Cage" , "McLaren"
-	];
 
-	var index = Math.floor((Math.random() * artists.length));
-
-	return artists[index];
+	return randomArrayIndex(uncitableArtists);
+		
 }
 
 function twoTermTitle(foo,bar){
@@ -171,14 +163,8 @@ function randomAdjectiveTwo(){
 }
 
 function randomAdjectiveThree(){
-	var adjectives = [
-	"structural" , "semiotic" , "modern" , "constructive" , "semantic"
-	, "deconstructive" , "patriarchial" , "conceptual" , "material"
-	];
-
-	var index = Math.floor((Math.random() * adjectives.length));
-
-	return adjectives[index];
+	
+	return randomArrayIndex(adjectivesThree);
 
 	//return "neomodernist";
 }
