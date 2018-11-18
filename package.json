@@ -1,0 +1,21 @@
+{
+  "name": "randomfootnote",
+  "version": "0.0.1",
+  "description": "Generates titles for plausible academic papers",
+  "main": "main.js",
+  "scripts": {
+    "test": "node main.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/zacfinger/"
+  },
+  "keywords": [
+    "pomo"
+  ],
+  "author": "Zac Finger",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "twitter": "^1.7.1"
+  }
+}
