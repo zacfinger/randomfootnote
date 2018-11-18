@@ -4,6 +4,15 @@ var config = require('./config.js');
 
 var t = new Twitter(config);
 
+/*//////////////
+
+LastName, F. (2015). Interplay: neo-geo neoconceptual art of the 1980s. Choice Reviews Online, 52(09), pp.52-4572-52-4572.
+Adam, E. (2017). Intersectional Coalitions: The Paradoxes of Rights-Based Movement Building in LGBTQ and Immigrant Communities. Law & Society Review, 51(1), pp.132-167.
+
+lastname, f. (year). article title. journal name, randNum(randNum), pp.randNum-randNum-randNum-randNum.
+
+*/
+
 var vcitable; // name of artist cited throughout text
 var vsubject; // subject 1, 2 and 3 of paper
 var vsubject2;
@@ -16,15 +25,165 @@ function trimE (str){
 	}
 }
 
-function randomModifierPrefix(){
-	var prefixes = ["post","neo","sub","pre"];
-	console.log(prefixes);
-	var index = Math.floor((Math.random() * prefixes.length-1));
-	return prefixes[index];
+function randomTitle(){
+	var titles = [
+	randomTitleTwo(), randomCandidTitle() + ": " + randomTitleTwo()];
+	var index = Math.floor((Math.random() * titles.length));
+
+	return titles[index];
+}
+
+function randomTitleTwo(){
+	var rand = Math.random();
+	if(rand >= 2/3){
+		vsubject = newTerm();
+	} else if (rand >= 1/3) {
+		vsubject = randomIdeology();
+	} else {
+		vsubject = randomArtMovement();
+	}
+
+	vsubject2 = newTerm();
+	vcitable = randomCitableArtist();
+
+	var titles = [
+	vsubject + " in the works of " + vcitable, 
+	vsubject + " in the works of " + randomArtist(),
+	twoTermTitle(vsubject,vsubject2),
+	threeTermTitle(vsubject,vsubject2,newTerm())
+	];
+
+	var index = Math.floor((Math.random() * titles.length));
+
+	return titles[index];
+
+	
 }
 
 
 
+function randomIdeology(){
+	var ideologies = [
+	"capitalism" , "Marxism" , "socialism" , "feminism"
+	, "libertarianism" , "objectivism" , "rationalism" , "nationalism"
+	, "nihilism"
+	];
+
+	var index = Math.floor((Math.random() * ideologies.length));
+
+	return ideologies[index];
+}
+
+function randomArtMovement(){
+	var ideologies = [
+	"surrealism" , "modernism" , "realism" , "social realism"
+	, "socialist realism" , "constructvism" , "expressionism"/*, "futurism",
+	"retrofuturism"*/
+	];
+
+	var index = Math.floor((Math.random() * ideologies.length));
+
+	return ideologies[index];
+
+
+}
+
+function randomArtist(){
+	if(Math.random() >= 0.5){
+		return randomCitableArtist();
+	}
+
+	return randomUncitableArtist();
+}
+
+function randomCitableArtist(){
+	var artists = [
+	"Burroughs" , "Joyce" , "Gibson"
+	, "Stone" , "Pynchon" , "Spelling" , "Tarantino" , "Madonna" 
+	, "Rushdie" , "Eco" 
+	];
+
+	var index = Math.floor((Math.random() * artists.length));
+
+	return artists[index];
+}
+
+function randomUncitableArtist(){
+	
+	var artists = [
+	"Koons" , "Mapplethorpe" , "Glass" , "Lynch" , "Fellini" 
+	, "Cage" , "McLaren"
+	];
+
+	var index = Math.floor((Math.random() * artists.length));
+
+	return artists[index];
+}
+
+function twoTermTitle(foo,bar){
+	if(Math.random() >= 0.5){
+		return foo + " and " + bar; 
+	}
+
+	return bar + " and " + foo;
+}
+
+function threeTermTitle(foo,bar,baz){
+	var titles = [
+	foo + ", " + bar + " and " + baz,
+	bar + ", " + foo + " and " + baz,
+	bar + ", " + baz + " and " + foo,
+	baz + ", " + foo + " and " + bar,
+	baz + ", " + bar + " and " + foo
+
+	];
+
+	var index = Math.floor((Math.random() * titles.length));
+
+	return titles[index];
+}
+
+function randomModifierPrefix(){
+	var prefixes = ["post","neo","sub","pre"];
+	var index = Math.floor((Math.random() * prefixes.length));
+
+	return prefixes[index];
+}
+
+function randomAdjective(){
+	var adjectives = [
+	randomAdjectiveTwo(),randomModifierPrefix() + randomAdjectiveTwo()];
+
+	var index = Math.floor((Math.random() * adjectives.length));
+
+	return adjectives[index];
+}
+
+function randomAdjectiveTwo(){
+	var adjectives = [
+	"capitalist",randomAdjectiveThree(),trimE(randomAdjectiveThree()),
+	"cultural","dialectic","textual"];
+
+	var index = Math.floor((Math.random() * adjectives.length));
+
+	return adjectives[index];
+	
+}
+
+function randomAdjectiveThree(){
+	var adjectives = [
+	"structural" , "semiotic" , "modern" , "constructive" , "semantic"
+	, "deconstructive" , "patriarchial" , "conceptual" , "material"
+	];
+
+	var index = Math.floor((Math.random() * adjectives.length));
+
+	return adjectives[index];
+
+	//return "neomodernist";
+}
+
+console.log(randomTitle());
 
 //var message = "";
 
