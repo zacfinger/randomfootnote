@@ -56,6 +56,8 @@ Works Cited:
 				Aesthetics and Modernity, 3rd ser., 1, no. 2 (Spring 1999): 13-49. 
 				Accessed November 18, 2018. doi:10.1017/cbo9780511663680.002
 (10) https://georgiasouthern.libguides.com/c.php?g=834918&p=5961587
+(11) https://en.wikipedia.org/wiki/List_of_unaccredited_institutions_of_higher_education
+(12) https://areomagazine.com/2018/10/02/academic-grievance-studies-and-the-corruption-of-scholarship/
 
 /////////////////////////////////////////////////////////////////////////////////////////////*/
 
@@ -64,12 +66,16 @@ Works Cited:
 // main.js
 var Twitter = require('twitter');
 var config = require('./config.js');
+const fs = require('fs');
 
 var t = new Twitter(config);
 
 var vcitable; // name of artist cited throughout text
 var vsubject; // subject 1, 2 and 3 of paper
 var vsubject2;
+
+var volumeNumber;
+var issueNumber;
 
 var prefixes = ["post","neo","sub","pre"/*, "proto"*/];
 var intellectuals = ["Lacan" , "Derrida" , "Baudrillard" , "Sartre" ,
@@ -219,10 +225,23 @@ var acadInstitution = [ "Massachusetts Institute of Technology",
 	"Miskatonic University, Arkham, Mass."
 ];
 
+// department
+var departmentTopics = [
+"English" , "Literature" , "Politics" , "Sociology" ,
+	"English" , "Literature" , "Politics" , "Sociology" ,
+// political correctness here
+	"Gender Politics" , "Peace Studies" ,
+	"Future Studies" ,
+// slightly silly, perhaps
+	"Ontology" , "Semiotics" , "Deconstruction" , "Sociolinguistics"
+];
+
 function randomArrayIndex(arr){
 	
 	try{
 		var index = Math.floor((Math.random() * arr.length));
+
+		volumeNumber = index;
 
 		return arr[index];
 
@@ -309,6 +328,9 @@ function randomTitle(){
 
 function randomTitleTwo(){
 	var rand = Math.random();
+
+	issueNumber = Math.floor(rand * 10);
+
 	if(rand >= 2/3){
 		vsubject = newTerm();
 	} else if (rand >= 1/3) {
@@ -524,12 +546,42 @@ function randomPublication(){
 	else {
 		quarterly = "Journal";
 	}
-	// also include 'studies' ?
 
-	return randomArrayIndex(acadInstitution)/* + randomDepartment() + " " + quarterly*/;
+	return randomArrayIndex(acadInstitution) + " Department of " + randomArrayIndex(departmentTopics) + " " + quarterly;
 }
 
-var message = randomName() + " (" + randomYear() + "). " + "'" + randomTitle() + ".' " + randomPublication();
+var message = randomName() + " " + randomYear() + ". '" 
+			+ randomTitle() + ".' " + randomPublication() + " " 
+			+ volumeNumber + "(" + issueNumber + "):";
+
+function readTextFile(file)
+{
+    var rawFile = new XMLHttpRequest();
+    rawFile.open("GET", file, false);
+    rawFile.onreadystatechange = function ()
+    {
+        if(rawFile.readyState === 4)
+        {
+            if(rawFile.status === 200 || rawFile.status == 0)
+            {
+                var allText = rawFile.responseText;
+                
+            }
+        }
+    }
+    rawFile.send(null);
+    return allText;
+}
+/*
+fs.writeFile("test", "Hey there!", function(err) {
+    if(err) {
+        return console.log(err);
+    }
+
+    console.log("The file was saved!");
+});*/
+
+console.log(readTextFile("test"));
 
 console.log(message);
 
