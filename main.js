@@ -29,7 +29,7 @@
 // // cultural narrative and Batailleist 'powerful communication'
 // // // may want to return to randomArtMovement() type methods and define arrays locally
 // google scholar link at end that links to search for the article
-// // remove "of" "the" "and" etc
+// // remove "of" "the" "and" "works" "in" "theory" etc
 // // search https://scholar.google.com/scholar?q=words.split(" ")
 // Retweet/reply to people using tag "citationneeded"
 // More topics and disciplines added
@@ -66,7 +66,11 @@ Works Cited:
 // main.js
 var Twitter = require('twitter');
 var config = require('./config.js');
+var pwd = require('./pwd.js'); // not sure this is the best
+// pull current working directory
+
 const fs = require('fs');
+var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
 var t = new Twitter(config);
 
@@ -76,6 +80,8 @@ var vsubject2;
 
 var volumeNumber;
 var issueNumber;
+
+var totalWords; // gotta get to 50K in the month of november to win
 
 var prefixes = ["post","neo","sub","pre"/*, "proto"*/];
 var intellectuals = ["Lacan" , "Derrida" , "Baudrillard" , "Sartre" ,
@@ -541,22 +547,27 @@ function randomPublication(){
 		quarterly = "Quarterly";
 	}
 	else if(rand >= 1/3){
-		quarterly = "Review";
+		if(Math.random() >= 4/5){
+			quarterly += "Quarterly ";
+		}
+		
+		quarterly += "Review";
 	}
 	else {
-		quarterly = "Journal";
+		if(Math.random() >= 4/5){
+			quarterly += "Quarterly ";
+		}
+
+		quarterly += "Journal";
 	}
 
 	return randomArrayIndex(acadInstitution) + " Department of " + randomArrayIndex(departmentTopics) + " " + quarterly;
 }
 
-var message = randomName() + " " + randomYear() + ". '" 
-			+ randomTitle() + ".' " + randomPublication() + " " 
-			+ volumeNumber + "(" + issueNumber + "):";
-
 function readTextFile(file)
 {
     var rawFile = new XMLHttpRequest();
+    
     rawFile.open("GET", file, false);
     rawFile.onreadystatechange = function ()
     {
@@ -564,31 +575,42 @@ function readTextFile(file)
         {
             if(rawFile.status === 200 || rawFile.status == 0)
             {
-                var allText = rawFile.responseText;
+                totalWords = rawFile.responseText;
                 
             }
         }
     }
     rawFile.send(null);
-    return allText;
 }
-/*
-fs.writeFile("test", "Hey there!", function(err) {
-    if(err) {
-        return console.log(err);
-    }
 
-    console.log("The file was saved!");
-});*/
+///////// WRITE THE TWEET
 
-console.log(readTextFile("test"));
+readTextFile("file://"+pwd+"wordtotal");
+
+var _randomTitle = randomTitle();
+
+var message = randomName() + " " + randomYear() + ". \"" 
+			+ _randomTitle + ".\" " + randomPublication() + " " 
+			+ (volumeNumber + 1) + "(" + (issueNumber + 1) + "): " + totalWords + "-";
+
+totalWords = Number(totalWords) + message.split(" ").length;
+
+fs.writeFile("wordtotal", totalWords, function(err) { });
+
+message += totalWords + ".";
 
 console.log(message);
+/*
+var attachmentURL = "https://scholar.google.com/scholar?q=" + _randomTitle;
+
+message += " " + attachmentURL;*/
 
 //t.post('statuses/update',{"status": message});
+
 /*
 try{
-	t.post('statuses/update',{"status": randomTitle()});
-} catch(err){
-	t.post('statuses/update',{"status": err.message});
+	t.post('statuses/update',{"status": message, "attachment_url": attachmentURL});
+} catch(e){
+	//t.post('statuses/update',{"status": e.message});
+	console.log("ERROR: " + e.message);
 }*/
