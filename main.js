@@ -1,20 +1,20 @@
 /*/////////////////////////////////////////////////////////////////////////////////////////////
-///																							///
-///  Postmodern Article Citation Generator													///
-///  JavaScript port of Postmodernism Generator by Andrew C. Bulhak, Monash University		///
-///  // // // http://www.elsewhere.org/journal/pomo/										///
-///  // // // https://github.com/orenmazor/Dada-Engine/blob/master/scripts/pomo.pb			///
-///  // // // pomo.pb  acb  ??-09-24 AU 													///
-///  // // // pb script for generating postmodern verbiage									///
-///  // // // Updated, format-independent version											///
-///  // // // Copyright (C) 1995, 1996 Andrew C. Bulhak										///
-///  // // // this script is property of acb. You are permitted to use, modify and 			///
-///  // // // distribute it as long as this notice is retained and any modifications		///
-///  // // // in distributed copies are clearly denoted.									///
-///  Derivative port (GPL-3.0) #NanoGenMo 2018 ZacFinger.com								///
-///  https://github.com/zacfinger/randomfootnote/   										///
-///  https://twitter.com/randomfootnote             										///
-///																							///
+///
+///  Postmodern Article Citation Generator
+///  JavaScript port of Postmodernism Generator by Andrew C. Bulhak, Monash University
+///  // // // http://www.elsewhere.org/journal/pomo/
+///  // // // https://github.com/orenmazor/Dada-Engine/blob/master/scripts/pomo.pb
+///  // // // pomo.pb  acb  ??-09-24 AU
+///  // // // pb script for generating postmodern verbiage
+///  // // // Updated, format-independent version
+///  // // // Copyright (C) 1995, 1996 Andrew C. Bulhak
+///  // // // this script is property of acb. You are permitted to use, modify and
+///  // // // distribute it as long as this notice is retained and any modifications
+///  // // // in distributed copies are clearly denoted.
+///  Derivative port (GPL-3.0) #NanoGenMo 2018 ZacFinger.com
+///  https://github.com/zacfinger/randomfootnote/
+///  https://twitter.com/randomfootnote
+///
 /////////////////////////////////////////////////////////////////////////////////////////////*/
 
 /* TODO:
@@ -32,24 +32,34 @@
 // Fix pluralise errors
 // // i.e., 'Concensues of genre: The neocultural paradigm of discourse in the works of Pynchon'
 
+// // generating journal titles
+// // journal, quarterly, review
+
 Works Cited:
 
-(1) https://github.com/orenmazor/Dada-Engine/blob/master/scripts/pomo.pb
-(2) LastName, F. (2015). Interplay: neo-geo neoconceptual art of the 1980s. 
+(01) https://github.com/orenmazor/Dada-Engine/blob/master/scripts/pomo.pb
+(02) LastName, F. (2015). Interplay: neo-geo neoconceptual art of the 1980s. 
 				Choice Reviews Online, 52(09), pp.52-4572-52-4572.
-(3) Adam, E. (2017). Intersectional Coalitions: The Paradoxes of Rights-Based Movement Building 
+(03) Adam, E. (2017). Intersectional Coalitions: The Paradoxes of Rights-Based Movement Building 
 				in LGBTQ and Immigrant Communities. Law & Society Review, 51(1), pp.132-167.
-(4) lastname, f. (year). article title. journal name, randNum(randNum), pp.randNum-randNum.
-(5) Muspratt, M. and Steeves, H. (2012). Rejecting Erasure Tropes of Africa: The Amazing Race, 
+(04) lastname, f. (year). article title. journal name, randNum(randNum), pp.randNum-randNum.
+(05) Muspratt, M. and Steeves, H. (2012). Rejecting Erasure Tropes of Africa: The Amazing Race, 
 				Episodes in Ghana Counter Postcolonial Critiques. Communication, Culture & 
 				Critique, 5(4), pp.533-540.
-(6) http://irsc.libguides.com/mla/workscitedlist
+(06) http://irsc.libguides.com/mla/workscitedlist
+(07) http://hypatiaphilosophy.org/for-contributors/manuscript-preparation-guidelines/
+(08) McDonald, CeCe. 2017. "Go beyond our natural selves": The prison letters of CeCe McDonald. 
+				Transgender Studies Quarterly 4 (2): 243–65.
+(09) Rampley, Matthew. "Truth, Interpretation and the Dialectic of Nihilism." Nietzsche, 
+				Aesthetics and Modernity, 3rd ser., 1, no. 2 (Spring 1999): 13-49. 
+				Accessed November 18, 2018. doi:10.1017/cbo9780511663680.002
+(10) https://georgiasouthern.libguides.com/c.php?g=834918&p=5961587
 
 /////////////////////////////////////////////////////////////////////////////////////////////*/
 
 // began work at 1005, took break 1125 to 1153 to cook and eat breakfast (28 mins)
 // another break between 2 and 220
-// as of 230pm approximately 3.5 hours invested
+// as of 330pm approximately 4 hours invested
 
 // main.js
 var Twitter = require('twitter');
@@ -139,7 +149,6 @@ var candidTitles = [ randomArrayIndex(doingSomethingTos) + " " + randomArrayInde
 ];
 //var authors = [randomAuthorInst(),randomAuthorInst(),randomAuthorInst()];
 
-
 var terms = [termAboutIntellectual(randomArrayIndex(intellectuals)),
 			randomArrayIndex(adjectives) + " " + randomArrayIndex(abstNouns),
 			randomArrayIndex(adjectives) + " " + randomArrayIndex(abstNouns), 
@@ -150,6 +159,42 @@ var terms = [termAboutIntellectual(randomArrayIndex(intellectuals)),
 var titles = [
 	randomTitleTwo(), randomCandidTitle() + ": " + capitalizeFirstLetter(randomTitleTwo())];
 
+var jeanSuffix = [ "Michel" , "Luc" , "Jacques" , "Jean" , "Francois" ];
+
+var genericSurnames = [ 
+	"de Selby" , "Hanfkopf" , "la Fournier" , "la Tournier" , "Hamburger" ,
+	// Lovecraftean scholars
+	"von Junz" , "d'Erlette" , "Geoffrey" , "Prinn" ,
+	// people from g09, monash.test or the AlphaLab
+	"Bailey" , "Brophy" , "Cameron" , "Humphrey" , "Pickett" , "Reicher" , "Sargeant" , "Scuglia" , "Werther" , "Wilson" ,
+	// net.crackpots
+	"McElwaine" , "Abian" , "von Ludwig", // Plutonium's real name
+	"Parry" , "Drucker" , "Dahmus" , "Dietrich", // a Monash local
+	"Hubbard" ,
+	// People from flat-earth, particularly those who helped with the Dada Engine
+	"Porter" , "Buxton" , "Long" , "Tilton" , "Finnis" 
+];
+
+var initials = [
+	"A.",'B.',"C.","D.","E.","F.","G.","H.","I.","J.","K.","L.","M.",
+	"N.","O.","P.","Q.","R.","S.","T.","U.","V.","W.","X.","Y.","Z."
+];
+
+var firstNames = [ 
+// French names
+"Jean-" + randomArrayIndex(jeanSuffix), randomArrayIndex(jeanSuffix),
+// Germanic names
+	"Andreas" , "Hans" , "Rudolf" , "Wilhelm" , "Stefan" , "Helmut" , "Ludwig",
+// generic or English-sounding names
+	"David" , "John" , "Linda" , "Charles" , "Thomas" , "Barbara" , "Jane" , "Stephen" , "Henry" , "Agnes" , "Anna", 
+	"Paul" , "Catherine" , "Martin" ];
+
+var names = [ 
+	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames) + ".",
+	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames) + " " + randomArrayIndex(initials),
+	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames) + " " + randomArrayIndex(initials) + randomArrayIndex(initials),
+	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(initials) + " " + randomArrayIndex(firstNames) + "."	
+];
 
 function randomArrayIndex(arr){
 	
@@ -162,8 +207,6 @@ function randomArrayIndex(arr){
 	//	return "neomodernist";
 		return err.message;
 	}
-	
-
 }
 
 // turns deconstructive into deconstrucitivist 
@@ -226,8 +269,8 @@ function replaceLastLetterWith(str,oldLastLetter,newLastLetter){
 }
 
 function randomTitle(){
-	
-	return randomArrayIndex(titles);
+
+	return detectUndefined(capitalizeFirstLetter(randomArrayIndex(titles)));
 }
 
 function randomTitleTwo(){
@@ -314,6 +357,13 @@ function detectUndefined(str){
 			newStr+=" ";
 	}
 	return newStr;
+}
+
+function randomYear(){
+	var currentYear = new Date().getFullYear();
+	var lowerBound = currentYear - 20;
+
+	return Math.floor(Math.random() * (currentYear - lowerBound) + lowerBound);
 }
 
 /*
@@ -423,8 +473,11 @@ function randomAbstNounTwo(){
 	return randomArrayIndex(abstNounsTwo);
 }*/
 
+function randomName(){
+	return capitalizeFirstLetter(randomArrayIndex(names));
+}
 
-var message = detectUndefined(capitalizeFirstLetter(randomTitle()));
+var message = randomName() + " (" + randomYear() + "). " + "'" + randomTitle() + ".' ";
 
 console.log(message);
 
