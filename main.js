@@ -18,22 +18,24 @@
 /////////////////////////////////////////////////////////////////////////////////////////////*/
 
 /* TODO:
-// Refactor all code to use randomArrayIndex rather than encapsulated methods for the arrays
-// Fix 'candid title' so that all words are capitalized
-// // i.e. 'The discourse of paradigm' becomes "The Discourse of Paradigm"
-// // i.e. 'The burning house: Nihilism in the works of Glass'
+// generating journal titles
+// // university + department + (journal || quarterly || review)
+// multiple author(s) and whether or not to use initials
+// // twitter character length = 280
+// Fix 'candid title' so that words like "of" are not capitalized
+// // more faithfully port acb's capitalization rules
 // Figure out why sometimes the titles have repetitive terms
 // // i.e., The reality of futility: Batailleist 'powerful communication', 
 // // cultural narrative and Batailleist 'powerful communication'
 // // // may want to return to randomArtMovement() type methods and define arrays locally
+// google scholar link at end that links to search for the article
+// // remove "of" "the" "and" etc
+// // search https://scholar.google.com/scholar?q=words.split(" ")
 // Retweet/reply to people using tag "citationneeded"
 // More topics and disciplines added
 // Use regex to teach yourself regular expressions
 // Fix pluralise errors
 // // i.e., 'Concensues of genre: The neocultural paradigm of discourse in the works of Pynchon'
-
-// // generating journal titles
-// // journal, quarterly, review
 
 Works Cited:
 
@@ -57,9 +59,7 @@ Works Cited:
 
 /////////////////////////////////////////////////////////////////////////////////////////////*/
 
-// began work at 1005, took break 1125 to 1153 to cook and eat breakfast (28 mins)
-// another break between 2 and 220
-// as of 330pm approximately 4 hours invested
+// as of 11pm approximately 5 hours invested
 
 // main.js
 var Twitter = require('twitter');
@@ -70,7 +70,7 @@ var t = new Twitter(config);
 var vcitable; // name of artist cited throughout text
 var vsubject; // subject 1, 2 and 3 of paper
 var vsubject2;
-var vsubject3;
+
 var prefixes = ["post","neo","sub","pre"/*, "proto"*/];
 var intellectuals = ["Lacan" , "Derrida" , "Baudrillard" , "Sartre" ,
 	"Foucault" , "Marx" , "Debord" , "Bataille" , "Lyotard" , "Sontag"];
@@ -157,7 +157,7 @@ var terms = [termAboutIntellectual(randomArrayIndex(intellectuals)),
 			randomArrayIndex(adjectives) + " " + randomArrayIndex(ideologies)];
 
 var titles = [
-	randomTitleTwo(), randomCandidTitle() + ": " + capitalizeFirstLetter(randomTitleTwo())];
+	randomTitleTwo(), titleCase(randomCandidTitle()) + ": " + capitalizeFirstLetter(randomTitleTwo())];
 
 var jeanSuffix = [ "Michel" , "Luc" , "Jacques" , "Jean" , "Francois" ];
 
@@ -196,6 +196,29 @@ var names = [
 	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(initials) + " " + randomArrayIndex(firstNames) + "."	
 ];
 
+// institutions from whence authors come; biased towards computer-science-type
+// institutions ;-)
+var universityOf = [ "California" , "Illinois" , "Georgia" , "Massachusetts",
+					 "Michigan" , "North Carolina" , "Oregon" /*,"Arizona"*/ ];
+// university of new sioux nation press
+
+var somethingUniversity = [ "Oxford", "Harvard", "Cambridge", "Yale" ];
+
+var acadInstitution = [ "Massachusetts Institute of Technology",
+	"Stanford University",
+	"Carnegie-Mellon University",
+	"University of California, Berkeley",
+	"University of Illinois",
+// but who could forget Doctress Fruitopia's alma mater.....
+	"University of Massachusetts, Amherst",
+	"University of " + randomArrayIndex(universityOf),
+	"University of " + randomArrayIndex(universityOf),
+	randomArrayIndex(somethingUniversity) + " University",
+	randomArrayIndex(somethingUniversity) + " University",
+// ...and, of course....
+	"Miskatonic University, Arkham, Mass."
+];
+
 function randomArrayIndex(arr){
 	
 	try{
@@ -207,6 +230,17 @@ function randomArrayIndex(arr){
 	//	return "neomodernist";
 		return err.message;
 	}
+}
+
+function titleCase(str) {
+   var splitStr = str.toLowerCase().split(' ');
+   for (var i = 0; i < splitStr.length; i++) {
+       // You do not need to check if i is larger than splitStr length, as your for does that for you
+       // Assign it back to the array
+       splitStr[i] = splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);     
+   }
+   // Directly return the joined string
+   return splitStr.join(' '); 
 }
 
 // turns deconstructive into deconstrucitivist 
@@ -361,7 +395,7 @@ function detectUndefined(str){
 
 function randomYear(){
 	var currentYear = new Date().getFullYear();
-	var lowerBound = currentYear - 20;
+	var lowerBound = currentYear - 24;
 
 	return Math.floor(Math.random() * (currentYear - lowerBound) + lowerBound);
 }
@@ -477,7 +511,25 @@ function randomName(){
 	return capitalizeFirstLetter(randomArrayIndex(names));
 }
 
-var message = randomName() + " (" + randomYear() + "). " + "'" + randomTitle() + ".' ";
+function randomPublication(){
+	var quarterly = "";
+	var rand = Math.random();
+
+	if(rand >= 2/3){
+		quarterly = "Quarterly";
+	}
+	else if(rand >= 1/3){
+		quarterly = "Review";
+	}
+	else {
+		quarterly = "Journal";
+	}
+	// also include 'studies' ?
+
+	return randomArrayIndex(acadInstitution)/* + randomDepartment() + " " + quarterly*/;
+}
+
+var message = randomName() + " (" + randomYear() + "). " + "'" + randomTitle() + ".' " + randomPublication();
 
 console.log(message);
 
