@@ -1,6 +1,9 @@
 /*/////////////////////////////////////////////////////////////////////////////////////////////
 ///
 ///  Postmodern Article Citation Generator
+///  (GPL-3.0) #NanoGenMo 2018 ZacFinger.com
+///  https://github.com/zacfinger/randomfootnote/
+///  https://twitter.com/randomfootnote
 ///  JavaScript port of Postmodernism Generator by Andrew C. Bulhak, Monash University
 ///  // // // http://www.elsewhere.org/journal/pomo/
 ///  // // // https://github.com/orenmazor/Dada-Engine/blob/master/scripts/pomo.pb
@@ -11,31 +14,46 @@
 ///  // // // this script is property of acb. You are permitted to use, modify and
 ///  // // // distribute it as long as this notice is retained and any modifications
 ///  // // // in distributed copies are clearly denoted.
-///  Derivative port (GPL-3.0) #NanoGenMo 2018 ZacFinger.com
-///  https://github.com/zacfinger/randomfootnote/
-///  https://twitter.com/randomfootnote
 ///
 /////////////////////////////////////////////////////////////////////////////////////////////*/
 
 /* TODO:
-// generating journal titles
-// // university + department + (journal || quarterly || review)
-// multiple author(s) and whether or not to use initials
-// // twitter character length = 280
-// Fix 'candid title' so that words like "of" are not capitalized
+
+// TODO: modify randomTitleTwo so that it writes to _randomTitle 
+// if it is not a candid title such as "the forgotten key"
+// this will allow it to be included in the google search
+
+// TODO: Fix pluralise errors
+// // i.e., 'Concensues of genre: The neocultural paradigm of discourse in the works of Pynchon'
+
+// TODO: Fix 'candid title' so that words like "of" are not capitalized
 // // more faithfully port acb's capitalization rules
-// Figure out why sometimes the titles have repetitive terms
+
+// TODO: Multiple authors
+// // whether or not to use initials
+// // twitter character length = 280
+
+// TODO: whether or not to adjust formatting
+// using Hypatia manual of style now
+// MLA and Chicago look more obvious such as pp. and Vol/No.
+
+// TODO: consider tweeting #nanoGenMo if currentMonth() == November
+
+// TODO: Retweet/reply to people using tag "citationneeded"
+// and tag "citeyoursources"
+
+// TODO: Figure out why sometimes the titles have repetitive terms
 // // i.e., The reality of futility: Batailleist 'powerful communication', 
 // // cultural narrative and Batailleist 'powerful communication'
-// // // may want to return to randomArtMovement() type methods and define arrays locally
-// google scholar link at end that links to search for the article
-// // remove "of" "the" "and" "works" "in" "theory" etc
-// // search https://scholar.google.com/scholar?q=words.split(" ")
-// Retweet/reply to people using tag "citationneeded"
-// More topics and disciplines added
-// Use regex to teach yourself regular expressions
-// Fix pluralise errors
-// // i.e., 'Concensues of genre: The neocultural paradigm of discourse in the works of Pynchon'
+
+// TODO: may want to return to randomArtMovement() type methods and define arrays locally
+// algorithm is weird because it is reverse engineered from acb's pb script
+
+// TODO: More topics and disciplines needed to approach SCIgen similarity
+
+// TODO: Use regex to teach yourself regular expressions
+
+/////////////////////////////////////////////////////////////////////////////////////////////
 
 Works Cited:
 
@@ -60,8 +78,6 @@ Works Cited:
 (12) https://areomagazine.com/2018/10/02/academic-grievance-studies-and-the-corruption-of-scholarship/
 
 /////////////////////////////////////////////////////////////////////////////////////////////*/
-
-// as of 11pm approximately 5 hours invested
 
 // main.js
 var Twitter = require('twitter');
@@ -329,7 +345,17 @@ function replaceLastLetterWith(str,oldLastLetter,newLastLetter){
 
 function randomTitle(){
 
-	return detectUndefined(capitalizeFirstLetter(randomArrayIndex(titles)));
+	_randomTitle = detectUndefined(capitalizeFirstLetter(randomTitleTwo()));
+
+	if(Math.random() >= 0.5){
+
+		return _randomTitle;
+	}
+
+	return detectUndefined(capitalizeFirstLetter(
+		titleCase(randomCandidTitle()) + ": " + capitalizeFirstLetter(_randomTitle)));
+
+	//return detectUndefined(capitalizeFirstLetter(randomArrayIndex(titles)));
 }
 
 function randomTitleTwo(){
@@ -422,6 +448,7 @@ function detectUndefined(str){
 }
 
 function randomYear(){
+	// returns random year between now and 24 years ago
 	var currentYear = new Date().getFullYear();
 	var lowerBound = currentYear - 24;
 
@@ -429,34 +456,6 @@ function randomYear(){
 }
 
 /*
-function randomConcreteAdjective(){
-	return randomArrayIndex(concreteAdjectives);
-}
-
-function randomConcreteNoun(){
-	return randomArrayIndex(concreteNouns);
-}
-
-function randomDoingSomethingTo(){
-	return randomArrayIndex(doingSomethingTos);
-}
-
-function randomDoingSomethingToMovement(){
-	return randomArrayIndex(doingSomethingToMovements);
-}
-
-function formattedAuthors(){
-	return randomArrayIndex(authors);
-}
-
-function randomAuthorInst(){
-	// department + acad institution
-}
-
-function somethingOfTwo(){
-	return randomArrayIndex(somethingOfTwos);
-}
-
 function randomIdeology(){
 	return randomArrayIndex(ideologies);
 
@@ -467,73 +466,7 @@ function randomArtMovement(){
 
 
 }
-
-function adjectiviseIsm(){
-
-}
-
-// adjectives
-// adverbs
-
-function randomBigNebulousThing(){
-	return randomArrayIndex(bigNebulousThings);
-}
-
-function randomBigThing(){
-	return randomArrayIndex(bigThings);
-}
-
-function randomBigAbstThing(){
-	return randomArrayIndex(bigAbstThings);
-}
-
-function randomCitableArtist(){
-
-	return randomArrayIndex(citableArtists);
-}
-
-function randomUncitableArtist(){
-
-	return randomArrayIndex(uncitableArtists);
-		
-}
-
-function randomIntellectual(){
-	return randomArrayIndex(intellectuals);
-}
-
-function randomModifierPrefix(){
-	
-	return randomArrayIndex(prefixes);
-}
-
-function randomAdjective(){
-	
-
-	return randomArrayIndex(adjectives);
-}
-
-function randomAdjectiveTwo(){
-	
-//return "blah";
-	return randomArrayIndex(adjectivesTwo);
-	
-}
-
-function randomAdjectiveThree(){
-	
-	return randomArrayIndex(adjectivesThree);
-
-	//return "neomodernist";
-}
-
-function randomAbstNoun(){
-	return randomArrayIndex(abstNouns);
-}
-
-function randomAbstNounTwo(){
-	return randomArrayIndex(abstNounsTwo);
-}*/
+*/
 
 function randomName(){
 	return capitalizeFirstLetter(randomArrayIndex(names));
@@ -583,27 +516,56 @@ function readTextFile(file)
     rawFile.send(null);
 }
 
+function makeGoogleScholarURL(str){
+	var wordArray = str.split(" ");
+	var url = "https://scholar.google.com/scholar?q=";
+	var tempWord = "";
+
+	for(var x=0;x<wordArray.length;x++){
+		tempWord = wordArray[x].toLowerCase()
+
+		if(tempWord != "of" && tempWord != "and"
+		&& tempWord != "the" && tempWord != "in"
+		&& tempWord != "works"){
+
+			if(tempWord == "'"){
+				tempWord = tempWord.subtr(1,tempWord.length);
+			}
+
+			if(tempWord.substr(tempWord.length - 1) == ","
+			|| tempWord.substr(tempWord.length - 1) == ":"
+			|| tempWord.substr(tempWord.length - 1) == "'"){
+				url += tempWord.substr(0,tempWord.length-1);
+
+			} else {
+				url += tempWord;
+			}
+			
+
+			if(x+1 != wordArray.length){
+			url += "+";
+			}
+		}
+	}
+
+	return url;
+}
+
 ///////// WRITE THE TWEET
 
 readTextFile("file://"+pwd+"wordtotal");
 
-var _randomTitle = randomTitle();
-
 var message = randomName() + " " + randomYear() + ". \"" 
-			+ _randomTitle + ".\" " + randomPublication() + " " 
+			+ randomTitle() + ".\" " + randomPublication() + " " 
 			+ (volumeNumber + 1) + "(" + (issueNumber + 1) + "): " + totalWords + "-";
 
 totalWords = Number(totalWords) + message.split(" ").length;
 
 fs.writeFile("wordtotal", totalWords, function(err) { });
 
-message += totalWords + ".";
-
+message += totalWords + ". " + makeGoogleScholarURL(_randomTitle);
 console.log(message);
-/*
-var attachmentURL = "https://scholar.google.com/scholar?q=" + _randomTitle;
-
-message += " " + attachmentURL;*/
+//console.log(message.length);
 
 //t.post('statuses/update',{"status": message});
 
