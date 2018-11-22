@@ -17,25 +17,39 @@
 ///
 /////////////////////////////////////////////////////////////////////////////////////////////*/
 
-/* TODO:
+/* ////////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Modifications to acb's original code:
+/// 
+/// Publication names derived from acb's "Department of
+/// [Topic], [Academic Institution Name]" format now read: 
+/// "[Academic Institution Name] [Topic] [ Quarterly || 
+/// Review || Journal || Quarterly Review || Quarterly Journal ]"
+///
+/// Author names are always initials, except for the surname
+/// The full first names are still generated via acb's method
+/// but only the first index of the string is used for the name
+/// 
+/////////////////////////////////////////////////////////////////////////////////////////////*/
 
-// TODO: modify randomTitleTwo so that it writes to _randomTitle 
-// if it is not a candid title such as "the forgotten key"
-// this will allow it to be included in the google search
+/*/////////////////////////////////////////////////////////////////////////////////////////////
 
-// TODO: Fix pluralise errors
-// // i.e., 'Concensues of genre: The neocultural paradigm of discourse in the works of Pynchon'
+TO DO:
+
+// TODO: figure out why word count is wrong when tweeting code is called in a function
+// ideally randomTweet() method which takes in an ID to tweet at
 
 // TODO: Fix 'candid title' so that words like "of" are not capitalized
 // // more faithfully port acb's capitalization rules
 
-// TODO: Multiple authors
-// // whether or not to use initials
+// TODO: whether or not to use initials in firstnames
+// // fix it so that weird names dont appear, i.e.
+// // Von Ludwig, Jean-Jean J.. 2006.
 // // twitter character length = 280
 
 // TODO: whether or not to adjust formatting
 // using Hypatia manual of style now
-// MLA and Chicago look more obvious such as pp. and Vol/No.
+// MLA and Chicago look more obvious such as (year) pp. and Vol/No.
 
 // TODO: consider tweeting #nanoGenMo if currentMonth() == November
 
@@ -48,8 +62,9 @@
 
 // TODO: may want to return to randomArtMovement() type methods and define arrays locally
 // algorithm is weird because it is reverse engineered from acb's pb script
+// Refactor so that it is not so messy
 
-// TODO: More topics and disciplines needed to approach SCIgen similarity
+// TODO: More topics, universities and disciplines needed to approach SCIgen similarity
 
 // TODO: Use regex to teach yourself regular expressions
 
@@ -90,7 +105,7 @@ var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
 var t = new Twitter(config);
 
-var vcitable; // name of artist cited throughout text
+//var vcitable; // name of artist cited throughout text
 var vsubject; // subject 1, 2 and 3 of paper
 var vsubject2;
 
@@ -116,20 +131,7 @@ var citableArtists = [	"Burroughs" , "Joyce" , "Gibson"
 var uncitableArtists = [ "Koons" , "Mapplethorpe" , "Glass" , "Lynch" , "Fellini" , "Cage" , "McLaren" ];
 var adjectivesThree = [	"structural" , "semiotic" , "modern" , "constructive" , "semantic"
 						, "deconstructive" , "patriarchial" , "conceptual" , "material" ];
-/*var works = {
-"Spelling": ["Beverly Hills 90210","Melrose Place","Models,Inc."],
-"Pynchon": ["Gravity's Rainbow","Vineland","The Crying of Lot 49"],
-"Stone": ["JFK","Natural Born Killers","Heaven and Earth","Platoon"],
-"Tarantino":["Reservoir Dogs","Pulp Fiction","Clerks"],//Tarantino did NOT do Clerks
-"Fellini":["8 1/2"],
-"Burroughs": ["The Naked Lunch","The Soft Machine","Queer","Port of Saints","Junky",
-			"The Ticket That Exploded","Nova Express","The Last Words of Dutch Schultz"],
-"Joyce": ["Ulysses","Finnegan's Wake"],
-"Gibson": ["Neuromancer","The Burning Chrome","Mona Lisa Overdrive","Virtual Light"],
-"Madonna": ["Erotica","Sex","Material Girl"],
-"Rushdie": ["Satanic Verses","Midnight's Children"],
-"Eco": ["The Name of the Rose","Foucault's Pendulum"]
-};*/
+
 var concepts = {
 "Lacan": ["obscurity"],
 "Derrida": ["reading"],
@@ -147,7 +149,7 @@ var concreteAdjectives = ["vermillion" , "circular" , "broken" , "forgotten",
 var concreteNouns = ["door" , "fruit" , "key" , "sky" , "sea" , "house"];
 var doingSomethingTos = ["reading" , "deconstructing" , "forgetting"];
 var doingSomethingToMovements = ["reinventing" , "deconstructing", "reassessing"];
-var bigNebulousThings = ["reality" , "discourse" , "concensus" , "expression"
+var bigNebulousThings = ["reality" , "discourse" , "consensus" , "expression"
 	, "narrative" , "context" ];
 var somethingOfTwos = ["failure" , "futility" , "collapse" , "fatal flaw"
 	, "rubicon" , "stasis" , "meaninglessness" , "absurdity" , "paradigm"
@@ -204,8 +206,8 @@ var genericSurnames = [
 ];
 
 var initials = [
-	"A.",'B.',"C.","D.","E.","F.","G.","H.","I.","J.","K.","L.","M.",
-	"N.","O.","P.","Q.","R.","S.","T.","U.","V.","W.","X.","Y.","Z."
+	"A","B","C","D","E","F","G","H","I","J","K","L","M",
+	"N","O","P","Q","R","S","T","U","V","W","X","Y","Z"
 ];
 
 var firstNames = [ 
@@ -218,10 +220,10 @@ var firstNames = [
 	"Paul" , "Catherine" , "Martin" ];
 
 var names = [ 
-	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames) + ".",
-	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames) + " " + randomArrayIndex(initials),
-	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames) + " " + randomArrayIndex(initials) + randomArrayIndex(initials),
-	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(initials) + " " + randomArrayIndex(firstNames) + "."	
+	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames)[0],
+	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames)[0] + "." + randomArrayIndex(initials)[0],
+	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames)[0] + "." + randomArrayIndex(initials)[0] + "." + randomArrayIndex(initials)[0],
+	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(initials)[0] + "." + randomArrayIndex(firstNames)[0]
 ];
 
 // institutions from whence authors come; biased towards computer-science-type
@@ -248,7 +250,7 @@ var acadInstitution = [ "Massachusetts Institute of Technology",
 ];
 
 // department
-var departmentTopics = [
+var departmentTopics = [ // "Social Technology",
 "English" , "Literature" , "Politics" , "Sociology" ,
 	"English" , "Literature" , "Politics" , "Sociology" ,
 // political correctness here
@@ -263,7 +265,7 @@ function randomArrayIndex(arr){
 	try{
 		var index = Math.floor((Math.random() * arr.length));
 
-		volumeNumber = index;
+		volumeNumber = index * 2;
 
 		return arr[index];
 
@@ -349,11 +351,13 @@ function randomTitle(){
 
 	if(Math.random() >= 0.5){
 
-		return _randomTitle;
+		_randomTitle = detectUndefined(capitalizeFirstLetter(
+		titleCase(randomCandidTitle()) + ": " + capitalizeFirstLetter(_randomTitle)));
+
+		
 	}
 
-	return detectUndefined(capitalizeFirstLetter(
-		titleCase(randomCandidTitle()) + ": " + capitalizeFirstLetter(_randomTitle)));
+	return _randomTitle; 
 
 	//return detectUndefined(capitalizeFirstLetter(randomArrayIndex(titles)));
 }
@@ -372,10 +376,9 @@ function randomTitleTwo(){
 	}
 
 	vsubject2 = newTerm();
-	vcitable = randomArrayIndex(citableArtists);
-
+	
 	var titlesTwo = [
-	vsubject + " in the works of " + vcitable, 
+	vsubject + " in the works of " + randomArrayIndex(citableArtists), 
 	vsubject + " in the works of " + randomArtist(),
 	twoTermTitle(vsubject,vsubject2),
 	threeTermTitle(vsubject,vsubject2,newTerm())
@@ -448,9 +451,9 @@ function detectUndefined(str){
 }
 
 function randomYear(){
-	// returns random year between now and 24 years ago
+	// returns random year between now and 20 years ago
 	var currentYear = new Date().getFullYear();
-	var lowerBound = currentYear - 24;
+	var lowerBound = currentYear - 20;
 
 	return Math.floor(Math.random() * (currentYear - lowerBound) + lowerBound);
 }
@@ -469,7 +472,13 @@ function randomArtMovement(){
 */
 
 function randomName(){
-	return capitalizeFirstLetter(randomArrayIndex(names));
+
+	if(Math.random() > 1/3){
+		return capitalizeFirstLetter(randomArrayIndex(names)) + ".";
+	}
+	else {
+		return capitalizeFirstLetter(randomArrayIndex(names)) + " and " + capitalizeFirstLetter(randomArrayIndex(names)) + ".";
+	}
 }
 
 function randomPublication(){
@@ -494,12 +503,13 @@ function randomPublication(){
 		quarterly += "Journal";
 	}
 
-	return randomArrayIndex(acadInstitution) + " Department of " + randomArrayIndex(departmentTopics) + " " + quarterly;
+	return randomArrayIndex(acadInstitution) + /*" Department of "*/" " + randomArrayIndex(departmentTopics) + " " + quarterly;
 }
 
 function readTextFile(file)
 {
     var rawFile = new XMLHttpRequest();
+    //var temp;
     
     rawFile.open("GET", file, false);
     rawFile.onreadystatechange = function ()
@@ -509,11 +519,12 @@ function readTextFile(file)
             if(rawFile.status === 200 || rawFile.status == 0)
             {
                 totalWords = rawFile.responseText;
-                
+                //temp = rawFile.responseText;
             }
         }
     }
     rawFile.send(null);
+    //return temp;
 }
 
 function makeGoogleScholarURL(str){
@@ -528,13 +539,13 @@ function makeGoogleScholarURL(str){
 		&& tempWord != "the" && tempWord != "in"
 		&& tempWord != "works"){
 
-			if(tempWord == "'"){
-				tempWord = tempWord.subtr(1,tempWord.length);
+			if(tempWord[0] == "'"){
+				tempWord = tempWord.substr(1,tempWord.length);
 			}
 
-			if(tempWord.substr(tempWord.length - 1) == ","
-			|| tempWord.substr(tempWord.length - 1) == ":"
-			|| tempWord.substr(tempWord.length - 1) == "'"){
+			if(tempWord[tempWord.length - 1] == ","
+			|| tempWord[tempWord.length - 1] == ":"
+			|| tempWord[tempWord.length - 1] == "'"){
 				url += tempWord.substr(0,tempWord.length-1);
 
 			} else {
@@ -551,21 +562,63 @@ function makeGoogleScholarURL(str){
 	return url;
 }
 
+///////// GET ALL THE TWEETS
+
+// global since ID parameter
+// if since ID file is not empty
+// // set q object with parameter since_id 
+// query twitter with q object for keyword citationneeded 
+// if json response has property since_id was in the query
+// set y to json response length (entire array of tweets)
+// if json response since_id was not in query
+// // first time ever running
+// // set y to 1
+// query for x=0, x<y every first response in the query, tweet back at them and log the id at the last
+// or first one depending on which one is the "latest"
+
+// set value in file to since_ID
+// // on first run since_ID is set to 
+// if since_ID nonexistent
+// get all tweets since_ID
+// 
+/*
+var tweetGet = t.get('search/tweets',{"q": "citationneeded", "since_id": 1063169810723471400});
+console.log(tweetGet.value);
+
+tweetGet.then(function(value){
+console.log(value);
+
+// occasionally vsubject or vsubject2 or ocassaionally both are set to keywords from the tweets themselves
+
+});*/
+
 ///////// WRITE THE TWEET
 
+//function randomTweet(){
+//	console.log(readTextFile("file://"+pwd+"wordtotal"));
+//totalWords = readTextFile("file://"+pwd+"wordtotal");
 readTextFile("file://"+pwd+"wordtotal");
 
 var message = randomName() + " " + randomYear() + ". \"" 
 			+ randomTitle() + ".\" " + randomPublication() + " " 
-			+ (volumeNumber + 1) + "(" + (issueNumber + 1) + "): " + totalWords + "-";
+			+ (volumeNumber + 2) + ", no. " + (issueNumber + 1) + ": pp." + totalWords + "-";
 
 totalWords = Number(totalWords) + message.split(" ").length;
 
-fs.writeFile("wordtotal", totalWords, function(err) { });
+fs.writeFile("wordtotal", totalWords, function(err) { 
 
-message += totalWords + ". " + makeGoogleScholarURL(_randomTitle);
+});
+
+message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*/;
+
+//return message;
+//}
+
+
+//console.log(randomTweet());
+//console.log(randomTweet());
 console.log(message);
-//console.log(message.length);
+
 
 //t.post('statuses/update',{"status": message});
 
