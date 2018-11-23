@@ -29,29 +29,38 @@
 /// Author names are always initials, except for the surname
 /// The full first names are still generated via acb's method
 /// but only the first index of the string is used for the name
+///
+/// For forming the bibliography I am now using a composite
+/// of the Chicago Manual of Style, MLA, and the format
+/// recommended by Hypatia journal.
+/// 
+/////////////////////////////////////////////////////////////////////////////////////////////*/
+
+/* ////////////////////////////////////////////////////////////////////////////////////////////
+///
+/// Deployment guide:
+/// 
+/// (1) Copy to repo on live server
+/// (2) Create file "wordtotal" with value "0"
+/// (3) Create file "pwd.js" with value:
+/// 	module.exports = "/path/to/current/working/dir/";
+/// (4) Create empty file "since_id"
+/// (5) Set cron job to run at desired frequency
 /// 
 /////////////////////////////////////////////////////////////////////////////////////////////*/
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////
-
-TO DO:
-
-// TODO: figure out why word count is wrong when tweeting code is called in a function
-// ideally randomTweet() method which takes in an ID to tweet at
-
-// TODO: Fix 'candid title' so that words like "of" are not capitalized
-// // more faithfully port acb's capitalization rules
-
-// TODO: whether or not to use initials in firstnames
-// // fix it so that weird names dont appear, i.e.
-// // Von Ludwig, Jean-Jean J.. 2006.
-// // twitter character length = 280
-
-// TODO: whether or not to adjust formatting
-// using Hypatia manual of style now
-// MLA and Chicago look more obvious such as (year) pp. and Vol/No.
-
-// TODO: consider tweeting #nanoGenMo if currentMonth() == November
+///
+/// TO DO:
+///
+/// TODO: figure out why word count is wrong when tweeting code is called in a function
+/// ideally randomTweet() method which takes in an ID to tweet at
+/// this is a problem with asynchronous calls
+///
+/// TODO: Fix 'candid title' so that words like "of" are not capitalized
+/// // more faithfully port acb's capitalization rules
+///
+/// TODO: consider tweeting #nanoGenMo if currentMonth() == November
 
 // TODO: Retweet/reply to people using tag "citationneeded"
 // and tag "citeyoursources"
@@ -220,10 +229,10 @@ var firstNames = [
 	"Paul" , "Catherine" , "Martin" ];
 
 var names = [ 
-	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames)[0],
-	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames)[0] + "." + randomArrayIndex(initials)[0],
-	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames)[0] + "." + randomArrayIndex(initials)[0] + "." + randomArrayIndex(initials)[0],
-	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(initials)[0] + "." + randomArrayIndex(firstNames)[0]
+	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames)[0] + ".",
+	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames)[0] + "." + randomArrayIndex(initials)[0] + ".",
+	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(firstNames)[0] + "." + randomArrayIndex(initials)[0] + "." + randomArrayIndex(initials)[0] + ".",
+	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(initials)[0] + "." + randomArrayIndex(firstNames)[0] + "."
 ];
 
 // institutions from whence authors come; biased towards computer-science-type
@@ -474,10 +483,10 @@ function randomArtMovement(){
 function randomName(){
 
 	if(Math.random() > 1/3){
-		return capitalizeFirstLetter(randomArrayIndex(names)) + ".";
+		return capitalizeFirstLetter(randomArrayIndex(names));
 	}
 	else {
-		return capitalizeFirstLetter(randomArrayIndex(names)) + " and " + capitalizeFirstLetter(randomArrayIndex(names)) + ".";
+		return capitalizeFirstLetter(randomArrayIndex(names)) + " and " + capitalizeFirstLetter(randomArrayIndex(names));
 	}
 }
 
@@ -509,7 +518,7 @@ function randomPublication(){
 function readTextFile(file)
 {
     var rawFile = new XMLHttpRequest();
-    //var temp;
+    var temp;
     
     rawFile.open("GET", file, false);
     rawFile.onreadystatechange = function ()
@@ -518,13 +527,13 @@ function readTextFile(file)
         {
             if(rawFile.status === 200 || rawFile.status == 0)
             {
-                totalWords = rawFile.responseText;
-                //temp = rawFile.responseText;
+                //totalWords = rawFile.responseText;
+                temp = rawFile.responseText;
             }
         }
     }
     rawFile.send(null);
-    //return temp;
+    return temp;
 }
 
 function makeGoogleScholarURL(str){
@@ -581,26 +590,50 @@ function makeGoogleScholarURL(str){
 // if since_ID nonexistent
 // get all tweets since_ID
 // 
-/*
-var tweetGet = t.get('search/tweets',{"q": "citationneeded", "since_id": 1063169810723471400});
-console.log(tweetGet.value);
+
+var since_id = readTextFile("file://"+pwd+"since_id");
+
+
+var tweetGet = t.get('search/tweets',{"q": "citationneeded", "since_id": since_id});
+//console.log(tweetGet["statuses"]);
 
 tweetGet.then(function(value){
-console.log(value);
+if(value["statuses"][0]!=undefined){
+	
+	var in_reply_to_status_id = value["statuses"][0].id;
+console.log(in_reply_to_status_id);
+var screen_name = value["statuses"][0]["user"].screen_name;
+console.log(screen_name);
+
+fs.writeFile("since_id", in_reply_to_status_id, function(err) { 
+	//console.log("file written");
+});
 
 // occasionally vsubject or vsubject2 or ocassaionally both are set to keywords from the tweets themselves
 
-});*/
+totalWords = readTextFile("file://"+pwd+"wordtotal");
+
+var message = "@" + screen_name + ": " + randomName() + " " + randomYear() + ". \"" 
+			+ randomTitle() + ".\" " + randomPublication() + " vol. " 
+			+ (volumeNumber + 2) + ", no. " + (issueNumber + 1) + ": pp." + totalWords + "-";
+
+totalWords = Number(totalWords) + message.split(" ").length - 1;
+
+fs.writeFile("wordtotal", totalWords, function(err) { 
+	//console.log("file written");
+});
+
+message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*/;
 
 ///////// WRITE THE TWEET
 
 //function randomTweet(){
 //	console.log(readTextFile("file://"+pwd+"wordtotal"));
 //totalWords = readTextFile("file://"+pwd+"wordtotal");
-readTextFile("file://"+pwd+"wordtotal");
+/*readTextFile("file://"+pwd+"wordtotal");
 
 var message = randomName() + " " + randomYear() + ". \"" 
-			+ randomTitle() + ".\" " + randomPublication() + " " 
+			+ randomTitle() + ".\" " + randomPublication() + " vol. " 
 			+ (volumeNumber + 2) + ", no. " + (issueNumber + 1) + ": pp." + totalWords + "-";
 
 totalWords = Number(totalWords) + message.split(" ").length;
@@ -609,23 +642,24 @@ fs.writeFile("wordtotal", totalWords, function(err) {
 
 });
 
-message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*/;
+message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*///;
 
 //return message;
 //}
-
-
-//console.log(randomTweet());
-//console.log(randomTweet());
 console.log(message);
 
-
-//t.post('statuses/update',{"status": message});
-
-/*
 try{
-	t.post('statuses/update',{"status": message, "attachment_url": attachmentURL});
+	t.post('statuses/update',{"status": message, "in_reply_to_status_id": in_reply_to_status_id,
+"auto_populate_reply_metadata": true});
 } catch(e){
 	//t.post('statuses/update',{"status": e.message});
 	console.log("ERROR: " + e.message);
-}*/
+}
+
+} else {
+	console.log("no recent tweets matching query");
+}
+
+
+});
+
