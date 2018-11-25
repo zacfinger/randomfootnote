@@ -1,23 +1,24 @@
-/*/////////////////////////////////////////////////////////////////////////////////////////////
+/*//////////////////////////////////////////////////////////////////////////////
 ///
-///  Postmodern Article Citation Generator v0.1
+///  Postmodern Article Citation Generator v0.1.8.11.24.22
 ///  (GPL-3.0) #NanoGenMo 2018 ZacFinger.com
 ///  https://github.com/zacfinger/randomfootnote/
 ///  https://twitter.com/randomfootnote
-///  JavaScript port of Postmodernism Generator by Andrew C. Bulhak, Monash University
-///  // // // http://www.elsewhere.org/journal/pomo/
-///  // // // https://github.com/orenmazor/Dada-Engine/blob/master/scripts/pomo.pb
-///  // // // pomo.pb  acb  ??-09-24 AU
-///  // // // pb script for generating postmodern verbiage
-///  // // // Updated, format-independent version
-///  // // // Copyright (C) 1995, 1996 Andrew C. Bulhak
-///  // // // this script is property of acb. You are permitted to use, modify and
-///  // // // distribute it as long as this notice is retained and any modifications
-///  // // // in distributed copies are clearly denoted.
+///  JavaScript port of Postmodernism Generator by 
+///  // // Andrew C. Bulhak, Monash University
+///  // // http://www.elsewhere.org/journal/pomo/
+///  // // https://github.com/orenmazor/Dada-Engine/blob/master/scripts/pomo.pb
+///  // // pomo.pb  acb  ??-09-24 AU
+///  // // pb script for generating postmodern verbiage
+///  // // Updated, format-independent version
+///  // // Copyright (C) 1995, 1996 Andrew C. Bulhak
+///  // // this script is property of acb. You are permitted to use, modify and
+///  // // distribute it as long as this notice is retained and any 
+///  // // modifications in distributed copies are clearly denoted.
 ///
-/////////////////////////////////////////////////////////////////////////////////////////////*/
+//////////////////////////////////////////////////////////////////////////////*/
 
-/* ////////////////////////////////////////////////////////////////////////////////////////////
+/*//////////////////////////////////////////////////////////////////////////////
 ///
 /// Modifications to acb's original generated article titles:
 /// 
@@ -26,17 +27,17 @@
 ///    "[Academic Institution Name] [Topic] [ Quarterly || 
 ///    Review || Journal || Quarterly Review || Quarterly Journal ]"
 ///
-/// // Author names are always initials, except for the surname
+/// // Author names are always initials, except for the surname.
 ///    The full first names are still generated via acb's method
-///    but only the first index of the string is used for the name
+///    but only the first index of the string is used for the name.
 ///
 /// // For forming the bibliography I am now using a composite
 ///    of the Chicago Manual of Style, MLA, and the format
 ///    recommended by Hypatia journal.
 /// 
-/////////////////////////////////////////////////////////////////////////////////////////////*/
+//////////////////////////////////////////////////////////////////////////////*/
 
-/* ////////////////////////////////////////////////////////////////////////////////////////////
+/*//////////////////////////////////////////////////////////////////////////////
 ///
 /// Deployment guide:
 /// 
@@ -47,61 +48,84 @@
 /// (4) Create empty file "since_id"
 /// (5) Set cron job to run at desired frequency
 /// 
-/////////////////////////////////////////////////////////////////////////////////////////////*/
+//////////////////////////////////////////////////////////////////////////////*/
 
-/*/////////////////////////////////////////////////////////////////////////////////////////////
+/*//////////////////////////////////////////////////////////////////////////////
 ///
 /// TO DO:
 ///
-/// TODO: figure out why word count is wrong when tweeting code is called in a function
-/// ideally randomTweet(in_reply_to_id) method which takes in an ID to tweet at
-/// this is a problem with asynchronous calls
+/// TODO: Get cron task working, not sure why it is failing now. Other node
+/// jobs in the same crontab but in a different directory are working. "Node"
+/// command is used in both, but in the working implementation arguments are 
+/// passed and output is sent to a file.
+///
+/// TODO: Main.js is now set up and working on a crontab on a different server,
+/// However the script seems to be tweeting at the "since_id" value even if the
+/// tweet has already been "replied to." Thus the bot will spam the most recent 
+/// tweet matching the query.
+///
+/// TODO: Figure out why word count is not updating in   
+/// tweets despite saving successfully in file
+///
+/// TODO: Document code, convert this section into readme.md
+/// /// Include algorithm in documentation
+/// /// Methodology used to deconstruct/reconstruct acb's PB script
+///
+/// TODO: figure out why word count is wrong when tweeting code is called in a 
+/// function. ideally randomTweet(in_reply_to_id) method which takes in an ID 
+/// to tweet at. this is a problem with asynchronous calls
 ///
 /// TODO: Fix 'candid title' so that words like "of" are not capitalized
 /// // more faithfully port acb's capitalization rules
 ///
 /// TODO: consider tweeting #nanoGenMo if currentMonth() == November
+///
+/// TODO: Figure out why sometimes the titles have repetitive terms
+/// // i.e., The reality of futility: Batailleist 'powerful communication', 
+/// // cultural narrative and Batailleist 'powerful communication'
+///
+/// TODO: may want to return to randomArtMovement() type methods and define 
+/// arrays locally. algorithm is weird because it is reverse engineered from 
+/// acb's pb script. Refactor so that it is not so messy
+///
+/// TODO: More topics, universities and disciplines 
+/// needed to approach SCIgen similarity
+///
+/// TODO: Use regex to teach yourself regular expressions
+///
+//////////////////////////////////////////////////////////////////////////////*/
 
-// TODO: Retweet/reply to people using tag "citationneeded"
-// and tag "citeyoursources"
-
-// TODO: Figure out why sometimes the titles have repetitive terms
-// // i.e., The reality of futility: Batailleist 'powerful communication', 
-// // cultural narrative and Batailleist 'powerful communication'
-
-// TODO: may want to return to randomArtMovement() type methods and define arrays locally
-// algorithm is weird because it is reverse engineered from acb's pb script
-// Refactor so that it is not so messy
-
-// TODO: More topics, universities and disciplines needed to approach SCIgen similarity
-
-// TODO: Use regex to teach yourself regular expressions
-
-/////////////////////////////////////////////////////////////////////////////////////////////
+/*//////////////////////////////////////////////////////////////////////////////
 
 Works Cited:
 
 (01) https://github.com/orenmazor/Dada-Engine/blob/master/scripts/pomo.pb
 (02) LastName, F. (2015). Interplay: neo-geo neoconceptual art of the 1980s. 
-				Choice Reviews Online, 52(09), pp.52-4572-52-4572.
-(03) Adam, E. (2017). Intersectional Coalitions: The Paradoxes of Rights-Based Movement Building 
-				in LGBTQ and Immigrant Communities. Law & Society Review, 51(1), pp.132-167.
-(04) lastname, f. (year). article title. journal name, randNum(randNum), pp.randNum-randNum.
-(05) Muspratt, M. and Steeves, H. (2012). Rejecting Erasure Tropes of Africa: The Amazing Race, 
-				Episodes in Ghana Counter Postcolonial Critiques. Communication, Culture & 
-				Critique, 5(4), pp.533-540.
+                Choice Reviews Online, 52(09), pp.52-4572-52-4572.
+(03) Adam, E. (2017). Intersectional Coalitions: The Paradoxes of Rights-Based 
+                Movement Building in LGBTQ and Immigrant Communities. Law & 
+                Society Review, 51(1), pp.132-167.
+(04) lastname, f. (year). article title. journal name, randNum(randNum), 
+                pp.randNum-randNum.
+(05) Muspratt, M. and Steeves, H. (2012). Rejecting Erasure Tropes of Africa: 
+                The Amazing Race, Episodes in Ghana Counter Postcolonial 
+                Critiques. Communication, Culture & Critique, 5(4), pp.533-540.
 (06) http://irsc.libguides.com/mla/workscitedlist
-(07) http://hypatiaphilosophy.org/for-contributors/manuscript-preparation-guidelines/
-(08) McDonald, CeCe. 2017. "Go beyond our natural selves": The prison letters of CeCe McDonald. 
-				Transgender Studies Quarterly 4 (2): 243–65.
-(09) Rampley, Matthew. "Truth, Interpretation and the Dialectic of Nihilism." Nietzsche, 
-				Aesthetics and Modernity, 3rd ser., 1, no. 2 (Spring 1999): 13-49. 
-				Accessed November 18, 2018. doi:10.1017/cbo9780511663680.002
+(07) http://hypatiaphilosophy.org/for-contributors/manuscript-
+                preparation-guidelines/
+(08) McDonald, CeCe. 2017. "Go beyond our natural selves": The prison letters 
+                of CeCe McDonald. Transgender Studies Quarterly 4 (2): 243–65.
+(09) Rampley, Matthew. "Truth, Interpretation and the Dialectic of Nihilism." 
+                Nietzsche, Aesthetics and Modernity, 3rd ser., 1, no. 2 (Spring 
+                1999): 13-49. Accessed November 18, 2018. 
+                doi:10.1017/cbo9780511663680.002
 (10) https://georgiasouthern.libguides.com/c.php?g=834918&p=5961587
-(11) https://en.wikipedia.org/wiki/List_of_unaccredited_institutions_of_higher_education
-(12) https://areomagazine.com/2018/10/02/academic-grievance-studies-and-the-corruption-of-scholarship/
+(11) https://en.wikipedia.org/wiki/List_of_unaccredited_institutions_of_
+                higher_education
+(12) https://areomagazine.com/2018/10/02/academic-grievance-studies-and-the-
+                corruption-of-scholarship/
 
-/////////////////////////////////////////////////////////////////////////////////////////////*/
+//////////////////////////////////////////////////////////////////////////////*/
 
 // authenticate to Twitter
 var Twitter = require('twitter');
@@ -109,15 +133,17 @@ var config = require('./config.js');
 var t = new Twitter(config);
 
 // Not sure this is the best implementation 
-// for pulling the current working directory
-// working with local files need PWD as string
+// for pulling the current working directory.
+// Working with local files need PWD as string
 var pwd = require('./pwd.js'); 
 
 // Other dependencies
+// Fs used for writing files
+// XMLHttpRequest for reading
 const fs = require('fs');
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 
-// Article final title subjects
+// Final article title subjects
 var vsubject;
 var vsubject2;
 
@@ -128,52 +154,88 @@ var vsubject2;
 var volumeNumber;
 var issueNumber;
 
-// gotta get to 50K in the month of november to win #nanogenmo
-// running count of total words ever generated by the bot
-// stored in local value /wordtotal and referenced in main.js
-// as totalWords when the file is opened by fs
+// Running count of total words ever generated by the bot
+// Gotta get to 50K in the month of november to win #NanoGenMo
+// Stored in local file /wordtotal and referenced in main.js
+// as totalWords when the file is opened by XMLHttpRequest.open()
+// Updated after tweet posted and written back into /wordtotal
+// by fs.writeFile()
 var totalWords; 
 
 // set of prefixes to use in ideology 
 // and art movement constructionisms
-var prefixes = ["post","neo","sub","pre"/*, "proto"*/];
-
-// set of names cited in the paper title
-var intellectuals = ["Lacan" , "Derrida" , "Baudrillard" , "Sartre" , "Foucault" , 
-                     "Marx" , "Debord" , "Bataille" , "Lyotard" , "Sontag"];
+// example: postcapitalism, neocapitalism, etc.
+var prefixes = [ "post","neo","sub","pre"/*, "proto", "hyper"*/];
 
 // set of base ideologies and movements from 
-// which to create terms such as hypermodernism
-var ideologies = [ 		"capitalism" , "Marxism" , "socialism" , "feminism" , "libertarianism" , 
-                        "objectivism" , "rationalism" , "nationalism" , "nihilism" 
-						/*, "#globalism", "#trumpism", "#accelerationism"*/];
-var artMovements = [ 	"surrealism" , "modernism" , "realism" , "social realism" ,
-                        "socialist realism" , "constructivism" , "expressionism"
-						/*, "futurism", "retrofuturism"*/ ];
-var citableArtists = [	"Burroughs" , "Joyce" , "Gibson" , "Stone" , "Pynchon" , 
-						"Spelling" , "Tarantino" , "Madonna", "Rushdie" , "Eco" ];
+// which to create terms such as "semiotic modernism"
+var ideologies = 
+[ "capitalism" , "Marxism" , "socialism" , "feminism" , "libertarianism" , 
+  "objectivism" , "rationalism" , "nationalism" , "nihilism" 
+  /*, "#globalism", "#trumpism", "#accelerationism"*/];
+var artMovements = 
+[ "surrealism" , "modernism" , "realism" , "social realism" , 
+  "socialist realism" , "constructivism" , "expressionism"
+  /*, "futurism", "retrofuturism"*/ ];
 
-var uncitableArtists = [ "Koons" , "Mapplethorpe" , "Glass" , "Lynch" , "Fellini" , "Cage" , "McLaren" ];
-var adjectivesThree = [	"structural" , "semiotic" , "modern" , "constructive" , "semantic"
-						, "deconstructive" , "patriarchial" , "conceptual" , "material" ];
+// array of adjectives
+// selected at random to modify
+// ideologies or art movements
+var adjectivesThree = [	"structural" , "semiotic" , "modern" , "constructive" ,
+"semantic" , "deconstructive" , "patriarchial" , "conceptual" , "material" ];
 
+// array of writers and philosophers
+// used as keys when querying the "concepts" object
+// i.e., "concepts" object has parameter "Marx"
+// with array ["capitalism","socialism","class"]
+// one of which is retrieved randomly from 
+// the function makeConcept(intellectual) which
+// accepts the "intellectual" as an arg
+var intellectuals = ["Lacan" , "Derrida" , "Baudrillard" , "Sartre" , 
+"Foucault" , "Marx" , "Debord" , "Bataille" , "Lyotard" , "Sontag"];
+
+// concepts object containing an array of terms
+// associated to each intellectual key
 var concepts = {
-"Lacan": ["obscurity"],
-"Derrida": ["reading"],
-"Baudrillard": ["simulation","simulacra","hyperreality"],
-"Sartre": ["absurdity","existentialism"],
-"Foucault": ["panopticon","power relations"],
-"Marx": ["capitalism","socialism","class"],
-"Debord": ["image","situation"],
-"Bataille":["'powerful communication'"],
-"Lyotard": ["narrative"],
-"Sontag": ["camp"]
+
+	"Lacan": ["obscurity"],
+	"Derrida": ["reading"],
+	"Baudrillard": ["simulation","simulacra","hyperreality"],
+	"Sartre": ["absurdity","existentialism"],
+	"Foucault": ["panopticon","power relations"],
+	"Marx": ["capitalism","socialism","class"],
+	"Debord": ["image","situation"],
+	"Bataille":["'powerful communication'"],
+	"Lyotard": ["narrative"],
+	"Sontag": ["camp"]
+
 };
+
+// array of writers and artists
+// used in the title, i.e., "capitalism in the works of gibson."
+// "citable" vs "uncitable" artists is a holdover from acb's original script,
+// which generated an entire paper including citations to "citable" artists.
+// for the present purposes this could simply be an array of artists
+var citableArtists = [	"Burroughs" , "Joyce" , "Gibson" , "Stone" , "Pynchon" ,
+"Spelling" , "Tarantino" , "Madonna", "Rushdie" , "Eco" ];
+var uncitableArtists = [ "Koons" , "Mapplethorpe" , "Glass" , "Lynch" , 
+"Fellini" , "Cage" , "McLaren" ];
+
+// adjectives and nouns for concrete objects
+// used in the generation of the "candid title",
+// i.e., "The Forgotten key: Derridaist reading and dialectic Marxism"
 var concreteAdjectives = ["vermillion" , "circular" , "broken" , "forgotten",
- 						"stone"	, "iron" , "burning"];
+"stone"	, "iron" , "burning"];
 var concreteNouns = ["door" , "fruit" , "key" , "sky" , "sea" , "house"];
+
+// array of gerunds for use in creating the "candid title"
+// doingSomethingTos only contains gerunds for concrete nouns
+// doingSomethingToMovements only contains gerunds that can be
+// applied to art movements or artists/intellectuals
 var doingSomethingTos = ["reading" , "deconstructing" , "forgetting"];
-var doingSomethingToMovements = ["reinventing" , "deconstructing", "reassessing"];
+var doingSomethingToMovements = ["reinventing" , "deconstructing", 
+"reassessing"];
+
 var bigNebulousThings = ["reality" , "discourse" , "consensus" , "expression"
 	, "narrative" , "context" ];
 var somethingOfTwos = ["failure" , "futility" , "collapse" , "fatal flaw"
@@ -202,7 +264,6 @@ var candidTitles = [ randomArrayIndex(doingSomethingTos) + " " + randomArrayInde
 					randomArrayIndex(doingSomethingToMovements) + " " + randomArrayIndex(artMovements)
 
 ];
-//var authors = [randomAuthorInst(),randomAuthorInst(),randomAuthorInst()];
 
 var terms = [termAboutIntellectual(randomArrayIndex(intellectuals)),
 			randomArrayIndex(adjectives) + " " + randomArrayIndex(abstNouns),
@@ -210,9 +271,6 @@ var terms = [termAboutIntellectual(randomArrayIndex(intellectuals)),
 			randomArrayIndex(adjectives) + " " + randomArrayIndex(adjectives) + " theory",
 			"the " + randomArrayIndex(adjectives) + " paradigm of " + randomArrayIndex(bigNebulousThings),
 			randomArrayIndex(adjectives) + " " + randomArrayIndex(ideologies)];
-
-var titles = [
-	randomTitleTwo(), titleCase(randomCandidTitle()) + ": " + capitalizeFirstLetter(randomTitleTwo())];
 
 var jeanSuffix = [ "Michel" , "Luc" , "Jacques" , "Jean" , "Francois" ];
 
@@ -257,7 +315,7 @@ var universityOf = [ "California" , "Illinois" , "Georgia" , "Massachusetts",
 					 "Michigan" , "North Carolina" , "Oregon" /*,"Arizona"*/ ];
 // university of new sioux nation press
 
-var somethingUniversity = [ "Oxford", "Harvard", "Cambridge", "Yale" ];
+var somethingUniversity = [ "Oxford", "Harvard", "Cambridge", "Yale"/*, "Portland State*/ ];
 
 var acadInstitution = [ "Massachusetts Institute of Technology",
 	"Stanford University",
@@ -361,6 +419,8 @@ function replaceLastLetterWith(str,oldLastLetter,newLastLetter){
 	return str + newLastLetter;
 }
 
+// Generates the random article title
+// About half of all generated output will prepend a "Candid Title"
 function randomTitle(){
 
 	_randomTitle = detectUndefined(capitalizeFirstLetter(randomTitleTwo()));
@@ -375,7 +435,6 @@ function randomTitle(){
 
 	return _randomTitle; 
 
-	//return detectUndefined(capitalizeFirstLetter(randomArrayIndex(titles)));
 }
 
 function randomTitleTwo(){
@@ -473,11 +532,6 @@ function randomYear(){
 
 	return Math.floor(Math.random() * (currentYear - lowerBound) + lowerBound);
 }
-
-/*
-function randomIdeology(){ return randomArrayIndex(ideologies); }
-function randomArtMovement(){ return randomArrayIndex(artMovements);}
-*/
 
 function randomName(){
 
@@ -596,73 +650,44 @@ var since_id = readTextFile("file://"+pwd+"since_id");
 var tweetGet = t.get('search/tweets',{"q": "citationneeded", "since_id": since_id});
 
 tweetGet.then(function(value){
+
 if(value["statuses"][0]!=undefined){
 	
-	var in_reply_to_status_id = value["statuses"][0].id_str;
-console.log(in_reply_to_status_id);
-var screen_name = value["statuses"][0]["user"].screen_name;
-console.log(screen_name);
+		var in_reply_to_status_id = value["statuses"][0].id_str;
+	//console.log(in_reply_to_status_id);
+	var screen_name = value["statuses"][0]["user"].screen_name;
+	//console.log(screen_name);
 
-fs.writeFile("since_id", in_reply_to_status_id, function(err) { 
-});
-
-// occasionally vsubject or vsubject2 or ocassaionally both are set to keywords from the tweets themselves
-
-totalWords = readTextFile("file://"+pwd+"wordtotal");
-
-var message = "@" + screen_name + ": " + randomName() + " " + randomYear() + ". \"" 
-			+ randomTitle() + ".\" " + randomPublication() + " vol. " 
-			+ (volumeNumber + 2) + ", no. " + (issueNumber + 1) + ": pp." + totalWords + "-";
-
-totalWords = Number(totalWords) + message.split(" ").length - 1;
-
-fs.writeFile("wordtotal", totalWords, function(err) { 
-});
-
-message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*/;
-
-///////// WRITE THE TWEET
-
-//function randomTweet(){
-//	console.log(readTextFile("file://"+pwd+"wordtotal"));
-//totalWords = readTextFile("file://"+pwd+"wordtotal");
-/*readTextFile("file://"+pwd+"wordtotal");
-
-var message = randomName() + " " + randomYear() + ". \"" 
-			+ randomTitle() + ".\" " + randomPublication() + " vol. " 
-			+ (volumeNumber + 2) + ", no. " + (issueNumber + 1) + ": pp." + totalWords + "-";
-
-totalWords = Number(totalWords) + message.split(" ").length;
-
-fs.writeFile("wordtotal", totalWords, function(err) { 
-
-});
-
-message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*///;
-
-//return message;
-//}
-console.log(message);
-
-
-	t.post('statuses/update',{"status": message, "in_reply_to_status_id": in_reply_to_status_id,
-"auto_populate_reply_metadata": true}, function(req, res) {
-    //console.log('Requesting posts');
-    //post.find({})
-        //.exec()
-        //.then(function(posts) {
-       //     res.json(posts);
-        //    console.log(posts);
-        //})
-        //.catch(function(error){
-        //    console.log('Error getting the posts');
-        //});
-        console.log(res);
+	fs.writeFile(pwd+"since_id", in_reply_to_status_id, function(err) { 
+		console.log(err);
 	});
+
+	// occasionally vsubject or vsubject2 or ocassaionally both are set to keywords from the tweets themselves
+
+	totalWords = readTextFile("file://"+pwd+"wordtotal");
+
+	var message = "@" + screen_name + ": " + randomName() + " " + randomYear() + ". \"" 
+				+ randomTitle() + ".\" " + randomPublication() + " vol. " 
+				+ (volumeNumber + 2) + ", no. " + (issueNumber + 1) + ": pp." + totalWords + "-";
+
+	totalWords = Number(totalWords) + message.split(" ").length - 1;
+
+	fs.writeFile(pwd+"wordtotal", totalWords, function(err) { 
+	});
+
+	message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*/;
+
+	//console.log(message);
+
+
+		t.post('statuses/update',{"status": message, "in_reply_to_status_id": in_reply_to_status_id,
+	"auto_populate_reply_metadata": true}, function(req, res) {
+	        //console.log(res);
+		});
 
 
 } else {
-	console.log("no recent tweets matching query");
+	//console.log("no recent tweets matching query");
 }
 
 
