@@ -44,8 +44,18 @@
 /// (1) Copy to repo on live server
 /// (2) Create file "wordtotal" with value "0"
 /// (3) Create file "pwd.js" with value:
-/// 	module.exports = "/path/to/current/working/dir/";
+///     module.exports = "/path/to/current/working/dir/";
 /// (4) Create empty file "since_id"
+/// (5) Create file "config.js" with value:
+///     module.exports = {
+///                          consumer_key: 'yourConsumerKey',
+///                          consumer_secret: 'yourConsumerSecret',
+///                          access_token_key: 'yourAccessTokenKey',
+///                          access_token_secret: 'yourAccessTokenSecret'
+///     }
+///     See Twitter's documentation for authenticating your application:
+///     https://developer.twitter.com/en/docs/basics/
+///     authentication/overview/oauth
 /// (5) Set cron job to run at desired frequency
 /// 
 //////////////////////////////////////////////////////////////////////////////*/
@@ -54,15 +64,15 @@
 ///
 /// TO DO:
 ///
+/// TODO: Set vsubject and vsubject2 to the two keywords in the tweet before the
+/// tweet that the bot is responding to. Grab the first tweet, grab the "in_
+/// reply_to_status_id", grab that tweet, parse the tweet through a 
+/// summarization library, set vsubject and vsubject2 to the two keywords.
+///
 /// TODO: Get cron task working, not sure why it is failing now. Other node
 /// jobs in the same crontab but in a different directory are working. "Node"
 /// command is used in both, but in the working implementation arguments are 
 /// passed and output is sent to a file.
-///
-/// TODO: Main.js is now set up and working on a crontab on a different server,
-/// However the script seems to be tweeting at the "since_id" value even if the
-/// tweet has already been "replied to." Thus the bot will spam the most recent 
-/// tweet matching the query.
 ///
 /// TODO: Figure out why word count is not updating in   
 /// tweets despite saving successfully in file
@@ -83,6 +93,10 @@
 /// TODO: Figure out why sometimes the titles have repetitive terms
 /// // i.e., The reality of futility: Batailleist 'powerful communication', 
 /// // cultural narrative and Batailleist 'powerful communication'
+/// // i.e., De Selby, M.X. 2012. "The Reality Of Paradigm: Predeconstructivist 
+/// // narrative, predeconstructivist rationalism and predeconstructivist 
+/// // narrative." Stanford University Future Studies Quarterly vol. 22, 
+/// // no. 9: pp.71-96
 ///
 /// TODO: may want to return to randomArtMovement() type methods and define 
 /// arrays locally. algorithm is weird because it is reverse engineered from 
@@ -94,6 +108,14 @@
 /// TODO: Use regex to teach yourself regular expressions
 ///
 //////////////////////////////////////////////////////////////////////////////*/
+
+/// RESOLVED
+
+/// TODO: Main.js is now set up and working on a crontab on a different server,
+/// However the script seems to be tweeting at the "since_id" value even if the
+/// tweet has already been "replied to." Thus the bot will spam the most recent 
+/// tweet matching the query.
+/// RESOLVED: uses absolute path of file to read/write "since_id"
 
 /*//////////////////////////////////////////////////////////////////////////////
 
@@ -125,6 +147,12 @@ Works Cited:
 (12) https://areomagazine.com/2018/10/02/academic-grievance-studies-and-the-
                 corruption-of-scholarship/
 
+//////////////////////////////////////////////////////////////////////////////*/
+
+/*//////////////////////////////////////////////////////////////////////////////
+///
+/// Local Parameters
+///
 //////////////////////////////////////////////////////////////////////////////*/
 
 // authenticate to Twitter
@@ -162,6 +190,12 @@ var issueNumber;
 // by fs.writeFile()
 var totalWords; 
 
+/*//////////////////////////////////////////////////////////////////////////////
+///
+/// Title Generation Parameters
+///
+//////////////////////////////////////////////////////////////////////////////*/
+
 // set of prefixes to use in ideology 
 // and art movement constructionisms
 // example: postcapitalism, neocapitalism, etc.
@@ -176,7 +210,7 @@ var ideologies =
 var artMovements = 
 [ "surrealism" , "modernism" , "realism" , "social realism" , 
   "socialist realism" , "constructivism" , "expressionism"
-  /*, "futurism", "retrofuturism"*/ ];
+  /*, "futurism", "retrofuturism", "afrofuturism" */ ];
 
 // array of adjectives
 // selected at random to modify
@@ -216,6 +250,7 @@ var concepts = {
 // "citable" vs "uncitable" artists is a holdover from acb's original script,
 // which generated an entire paper including citations to "citable" artists.
 // for the present purposes this could simply be an array of artists
+// but randomartist() and other calls to citableartist will have to be fixed
 var citableArtists = [	"Burroughs" , "Joyce" , "Gibson" , "Stone" , "Pynchon" ,
 "Spelling" , "Tarantino" , "Madonna", "Rushdie" , "Eco" ];
 var uncitableArtists = [ "Koons" , "Mapplethorpe" , "Glass" , "Lynch" , 
@@ -236,24 +271,32 @@ var doingSomethingTos = ["reading" , "deconstructing" , "forgetting"];
 var doingSomethingToMovements = ["reinventing" , "deconstructing", 
 "reassessing"];
 
-var bigNebulousThings = ["reality" , "discourse" , "consensus" , "expression"
-	, "narrative" , "context" ];
-var somethingOfTwos = ["failure" , "futility" , "collapse" , "fatal flaw"
-	, "rubicon" , "stasis" , "meaninglessness" , "absurdity" , "paradigm"
-	, "genre" , "defining characteristic" , "dialectic" , "economy" ];
-var bigAbstThings = ["culture" , "language" , "art" , "reality" , "truth" 
-	, "sexuality" , "narrativity" , "consciousness"];
-var adjectivesTwo = [
-	"capitalist",randomArrayIndex(adjectivesThree),trimE(randomArrayIndex(adjectivesThree)),
-	"cultural","dialectic","textual"];
-var adjectives = [
-	randomArrayIndex(adjectivesTwo),(randomArrayIndex(prefixes) + randomArrayIndex(adjectivesTwo))];
-var abstNounsTwo = ["sublimation", trimE(randomArrayIndex(adjectivesThree))+"ism"
-	,"construction",	"appropriation",	"materialism",	"situationism"];
-var abstNouns = [randomArrayIndex(abstNounsTwo),"theory","discourse",
-				"narrative","de" + randomArrayIndex(abstNounsTwo)];
-var bigThings = ["society" , "class" , randomArrayIndex(bigAbstThings) , "sexual identity" ];
+// larger words that can be used in 
+// the creation of titles and subtitles
+var bigNebulousThings = ["reality" , "discourse" , "consensus" , "expression" , 
+                         "narrative" , "context" ];
+var somethingOfTwos = ["failure" , "futility" , "collapse" , "fatal flaw" , 
+                       "rubicon" , "stasis" , "meaninglessness" , "absurdity" , 
+                       "paradigm", "genre" , "defining characteristic" , 
+                       "dialectic" , "economy" ];
+var bigAbstThings = ["culture" , "language" , "art" , "reality" , "truth" , 
+                     "sexuality" , "narrativity" , "consciousness"];
 
+// word arrays from which random indices 
+// are drawn in the randomTitle() methods
+var adjectivesTwo = [ "capitalist" , randomArrayIndex(adjectivesThree) , 
+                      trimE(randomArrayIndex(adjectivesThree)) , "cultural" , 
+                      "dialectic" , "textual" ];
+var adjectives = [ randomArrayIndex(adjectivesTwo) , 
+                  (randomArrayIndex(prefixes) + 
+                  	randomArrayIndex(adjectivesTwo))];
+var abstNounsTwo = [ "sublimation", trimE(randomArrayIndex(adjectivesThree)) + 
+                     "ism" , "construction",	"appropriation", "materialism",	
+                     "situationism"];
+var abstNouns = [ randomArrayIndex(abstNounsTwo) , "theory" , "discourse" ,
+                  "narrative" , "de" + randomArrayIndex(abstNounsTwo)];
+var bigThings = ["society" , "class" , randomArrayIndex(bigAbstThings) , 
+                 "sexual identity" ];
 var candidTitles = [ randomArrayIndex(doingSomethingTos) + " " + randomArrayIndex(intellectuals),
 					randomArrayIndex(adjectives) + " " + pluralise(randomArrayIndex(abstNouns)),
 					"The " + randomArrayIndex(concreteAdjectives) + " " + randomArrayIndex(concreteNouns),
@@ -271,6 +314,12 @@ var terms = [termAboutIntellectual(randomArrayIndex(intellectuals)),
 			randomArrayIndex(adjectives) + " " + randomArrayIndex(adjectives) + " theory",
 			"the " + randomArrayIndex(adjectives) + " paradigm of " + randomArrayIndex(bigNebulousThings),
 			randomArrayIndex(adjectives) + " " + randomArrayIndex(ideologies)];
+
+/*//////////////////////////////////////////////////////////////////////////////
+///
+/// Author Generation
+///
+//////////////////////////////////////////////////////////////////////////////*/
 
 var jeanSuffix = [ "Michel" , "Luc" , "Jacques" , "Jean" , "Francois" ];
 
@@ -309,13 +358,20 @@ var names = [
 	randomArrayIndex(genericSurnames) + ", " + randomArrayIndex(initials)[0] + "." + randomArrayIndex(firstNames)[0] + "."
 ];
 
+/*//////////////////////////////////////////////////////////////////////////////
+///
+/// Publication Generation
+///
+//////////////////////////////////////////////////////////////////////////////*/
+
 // institutions from whence authors come; biased towards computer-science-type
 // institutions ;-)
 var universityOf = [ "California" , "Illinois" , "Georgia" , "Massachusetts",
 					 "Michigan" , "North Carolina" , "Oregon" /*,"Arizona"*/ ];
 // university of new sioux nation press
 
-var somethingUniversity = [ "Oxford", "Harvard", "Cambridge", "Yale"/*, "Portland State*/ ];
+var somethingUniversity = [ "Oxford", "Harvard", "Cambridge", "Yale"
+/*, "Portland State", "Trump"*/ ];
 
 var acadInstitution = [ "Massachusetts Institute of Technology",
 	"Stanford University",
@@ -343,6 +399,15 @@ var departmentTopics = [ // "Social Technology",
 	"Ontology" , "Semiotics" , "Deconstruction" , "Sociolinguistics"
 ];
 
+/*//////////////////////////////////////////////////////////////////////////////
+///
+/// Methods
+///
+//////////////////////////////////////////////////////////////////////////////*/
+
+// for an array arr returns a random element from arr
+// embedded in a try/catch on the off chance 
+// one of the article titles will have an exception in it
 function randomArrayIndex(arr){
 	
 	try{
@@ -358,10 +423,11 @@ function randomArrayIndex(arr){
 	}
 }
 
+// Capitalize first letter of every word in some string 'str'
+// returns a string
 function titleCase(str) {
    var splitStr = str.toLowerCase().split(' ');
    for (var i = 0; i < splitStr.length; i++) {
-       // You do not need to check if i is larger than splitStr length, as your for does that for you
        // Assign it back to the array
        splitStr[i] = splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);     
    }
@@ -369,7 +435,8 @@ function titleCase(str) {
    return splitStr.join(' '); 
 }
 
-// turns deconstructive into deconstrucitivist 
+// turns string "str" with value "deconstructive" into "deconstrucitivist"
+// returns a string 
 function trimE (str){
 	// consider making this a regular expression
 	if(str[str.length-1] == "e"){
@@ -378,13 +445,16 @@ function trimE (str){
 	return str;
 }
 
+// removes "The" and "the" from the beginning of any string str
 function stripThe(str){
 	if(str.substring(0,4).toLowerCase() == "the ")
 		return str.substring(4,str.length-1);
 	return str;
 }
 
-//return a random concept associated with an intellectual
+//given input argument intellectual
+//queries "concept" object
+//returns a random concept associated with an intellectual
 function makeConcept(intellectual){
 	if(concepts.hasOwnProperty(intellectual))
 		return randomArrayIndex(concepts[intellectual]);
@@ -393,6 +463,7 @@ function makeConcept(intellectual){
 
 }
 
+// returns a pluralised copy of input string "str"
 function pluralise(str){
 	var lastChar = str[str.length-1];
 	if(lastChar == "y")
@@ -419,7 +490,7 @@ function replaceLastLetterWith(str,oldLastLetter,newLastLetter){
 	return str + newLastLetter;
 }
 
-// Generates the random article title
+// Generates the random article title from randomTitleTwo()
 // About half of all generated output will prepend a "Candid Title"
 function randomTitle(){
 
@@ -437,6 +508,12 @@ function randomTitle(){
 
 }
 
+// Randomly generates what will either be the full title of the article
+// Or the subtitle after a candid title is generated in randomTitle()
+// Half of all output is in the format "[vsubject] in the works of [random 
+// artist]" where [vsubject] will 67% of the time be an ideology or art
+// movement, the rest of the time it will be a newly constructed term via
+// the newTerm() method such as 'predeconstructivist rationalism'
 function randomTitleTwo(){
 	var rand = Math.random();
 
@@ -624,72 +701,76 @@ function makeGoogleScholarURL(str){
 	return url;
 }
 
-///////// GET ALL THE TWEETS
+///////// USE TWITTER API
 
-// global since ID parameter
-// if since ID file is not empty
-// // set q object with parameter since_id 
-// query twitter with q object for keyword citationneeded 
-// if json response has property since_id was in the query
-// set y to json response length (entire array of tweets)
-// if json response since_id was not in query
-// // first time ever running
-// // set y to 1
-// query for x=0, x<y every first response in the query, tweet back at them and log the id at the last
-// or first one depending on which one is the "latest"
+// global since_ID parameter stored in file "since_id"
+// use t.get() to query twitter for keyword citationneeded
+// if since ID file is empty
+// twitter still prcoesses the query
 
-// set value in file to since_ID
-// // on first run since_ID is set to 
-// if since_ID nonexistent
-// get all tweets since_ID
-// 
+// if json response is not empty
+// take id of first post in the json
+// and the screen name of the first post in the json
+
+// overwrite the file "since_id" with the id of the first post in the JSON
+
+// get the value of file "wordtotal"
+
+// generate the post:
+// // // @[screen_name]: [random name]. ([random year]) "[random title]." 
+// // // [random publication] vol.[randon number], no. [random number]: pp.
+// // // [total word count before this post]-[total word count after this post]
+// // // [link to google scholar query for keywords in the article title]
+
+// update totalWords with the word count of the tweet
+// overwrite the file "wordtotal" with new value of totalWords
+
+// post the tweet to Twitter API
 
 var since_id = readTextFile("file://"+pwd+"since_id");
-
 
 var tweetGet = t.get('search/tweets',{"q": "citationneeded", "since_id": since_id});
 
 tweetGet.then(function(value){
 
-if(value["statuses"][0]!=undefined){
-	
+	if(value["statuses"][0]!=undefined){
+		
 		var in_reply_to_status_id = value["statuses"][0].id_str;
-	//console.log(in_reply_to_status_id);
-	var screen_name = value["statuses"][0]["user"].screen_name;
-	//console.log(screen_name);
+		//console.log(in_reply_to_status_id);
+		var screen_name = value["statuses"][0]["user"].screen_name;
+		//console.log(screen_name);
 
-	fs.writeFile(pwd+"since_id", in_reply_to_status_id, function(err) { 
-		console.log(err);
-	});
-
-	// occasionally vsubject or vsubject2 or ocassaionally both are set to keywords from the tweets themselves
-
-	totalWords = readTextFile("file://"+pwd+"wordtotal");
-
-	var message = "@" + screen_name + ": " + randomName() + " " + randomYear() + ". \"" 
-				+ randomTitle() + ".\" " + randomPublication() + " vol. " 
-				+ (volumeNumber + 2) + ", no. " + (issueNumber + 1) + ": pp." + totalWords + "-";
-
-	totalWords = Number(totalWords) + message.split(" ").length - 1;
-
-	fs.writeFile(pwd+"wordtotal", totalWords, function(err) { 
-	});
-
-	message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*/;
-
-	//console.log(message);
-
-
-		t.post('statuses/update',{"status": message, "in_reply_to_status_id": in_reply_to_status_id,
-	"auto_populate_reply_metadata": true}, function(req, res) {
-	        //console.log(res);
+		fs.writeFile(pwd+"since_id", in_reply_to_status_id, function(err) { 
+			console.log(err);
 		});
 
+		if(screen_name != "tomscott" &&
+		   screen_name != "nitelich" &&
+		   screen_name != "nihilistanarch"){
 
-} else {
-	//console.log("no recent tweets matching query");
-}
+			totalWords = readTextFile("file://"+pwd+"wordtotal");
 
+			var message = "@" + screen_name + ": " + randomName() + " (" + randomYear() + "). \"" 
+						+ randomTitle() + ".\" " + randomPublication() + " vol. " 
+						+ (volumeNumber + 2) + ", no. " + (issueNumber + 1) + ": pp." + totalWords + "-";
+
+			totalWords = Number(totalWords) + message.split(" ").length - 1;
+
+			fs.writeFile(pwd+"wordtotal", totalWords, function(err) { 
+			});
+
+			message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*/;
+
+			t.post('statuses/update',{"status": message, "in_reply_to_status_id": in_reply_to_status_id,
+			"auto_populate_reply_metadata": true}, function(req, res) {
+			        //console.log(res);
+			});
+		}
+
+
+	} else {
+		//"no recent tweets matching query"
+	}
 
 });
 
