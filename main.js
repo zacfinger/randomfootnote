@@ -744,9 +744,20 @@ tweetGet.then(function(value){
 			console.log(err);
 		});
 
+		// consider loading these screen names from external file
+		// add new screen name every time it is found associated with tomscott
+		// and/or maintain time stamp for last time this person saw the random
+		// footnote
+		// https://stackoverflow.com/questions/30764424/insert-string-at-line-number-nodejs
+
 		if(screen_name != "tomscott" &&
 		   screen_name != "nitelich" &&
-		   screen_name != "nihilistanarch"){
+		   screen_name != "nihilistanarch" &&
+		   screen_name != "GetMiloaLife" &&
+		   screen_name != "JRWStormy" &&
+		   screen_name != "epinardscaramel" &&
+		   screen_name != "unnamedculprit" &&
+		   screen_name != "BenjiBorastero"){
 
 			totalWords = readTextFile("file://"+pwd+"wordtotal");
 
