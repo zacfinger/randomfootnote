@@ -4,7 +4,7 @@
 ///  (GPL-3.0) #NanoGenMo 2018 ZacFinger.com
 ///  https://github.com/zacfinger/randomfootnote/
 ///  https://twitter.com/randomfootnote
-///  JavaScript port of Postmodernism Generator by 
+///  NodeJS port of Postmodernism Generator by:
 ///  // // Andrew C. Bulhak, Monash University
 ///  // // http://www.elsewhere.org/journal/pomo/
 ///  // // https://github.com/orenmazor/Dada-Engine/blob/master/scripts/pomo.pb
@@ -56,7 +56,7 @@
 ///     See Twitter's documentation for authenticating your application:
 ///     https://developer.twitter.com/en/docs/basics/
 ///     authentication/overview/oauth
-/// (5) Set cron job to run at desired frequency
+/// (5) Set crontab to run at desired frequency
 /// 
 //////////////////////////////////////////////////////////////////////////////*/
 
@@ -162,14 +162,23 @@ var t = new Twitter(config);
 
 // Not sure this is the best implementation 
 // for pulling the current working directory.
-// Working with local files need PWD as string
+// Working with local files, need PWD as string
 var pwd = require('./pwd.js'); 
 
 // Other dependencies
-// Fs used for writing files
-// XMLHttpRequest for reading
+// // Fs used for writing files
+// // XMLHttpRequest for reading
+// // momentJS for parsing Twitter date
+// // sqlite3 for storing Twitter users
+// // // in local database screen_names.db
 const fs = require('fs');
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
+const moment = require('moment');
+const sqlite3 = require('sqlite3').verbose();
+
+// whether or not to execute the tweet is
+// based on how long ago we tweeted the user
+var tweetAt = false;
 
 // Final article title subjects
 var vsubject;
@@ -727,60 +736,137 @@ function makeGoogleScholarURL(str){
 
 // post the tweet to Twitter API
 
+// get the most recent ID we tweeted
 var since_id = readTextFile("file://"+pwd+"since_id");
 
-var tweetGet = t.get('search/tweets',{"q": "citationneeded", "since_id": since_id});
+// query Twitter for relevant posts made after since_id
+var tweetGet = t.get('search/tweets',{"q": "citationneeded", 
+                                      "since_id": since_id});
 
 tweetGet.then(function(value){
 
+	//console.log(value);
+
 	if(value["statuses"][0]!=undefined){
 		
+		// get ID of first post in the JSON
 		var in_reply_to_status_id = value["statuses"][0].id_str;
-		//console.log(in_reply_to_status_id);
-		var screen_name = value["statuses"][0]["user"].screen_name;
-		//console.log(screen_name);
 
-		fs.writeFile(pwd+"since_id", in_reply_to_status_id, function(err) { 
-			console.log(err);
+		// get screen name of first post in the JSON
+		var screen_name = value["statuses"][0]["user"].screen_name;
+
+		// convert Twitter timestamp to UNIX time via momentJS
+		var timeStamp = moment(value["statuses"][0]["created_at"], 
+						"ddd MMM DD HH:mm:ss Z YYYY", "en").unix();
+
+		// open database in memory
+		let db = new sqlite3.Database('screen_names.db', sqlite3.OPEN_READWRITE, (err) => {
+		  if (err) {
+		    console.error(err.message);
+		  }
+		  //console.log('Connected to the chinook database.');
 		});
 
-		// consider loading these screen names from external file
-		// add new screen name every time it is found associated with tomscott
-		// and/or maintain time stamp for last time this person saw the random
-		// footnote
-		// https://stackoverflow.com/questions/30764424/insert-string-at-line-number-nodejs
+		// look for screen name in db
+		db.all(`SELECT * FROM screen_names`, (err, row) => {
+		  if(err){
+		    return console.error(err.message);
+		  }
+		
+		  for(var x=0;x<row.length;x++){
+		    if(row[x]["user"] == screen_name){
+		      // if user matches
+		      // meaning we have tweeted at them before
 
-		if(screen_name != "tomscott" &&
-		   screen_name != "nitelich" &&
-		   screen_name != "nihilistanarch" &&
-		   screen_name != "GetMiloaLife" &&
-		   screen_name != "JRWStormy" &&
-		   screen_name != "epinardscaramel" &&
-		   screen_name != "unnamedculprit" &&
-		   screen_name != "BenjiBorastero"){
+		      // check time stamp
+		      if((timeStamp - row[x]["timestamp"]) >= (72*60*60)){
+		        // if time stamp is older than 72 hours ago
+		        // update timestamp in db
+		        db.run(`UPDATE screen_names SET timestamp = ? WHERE user = ?`, [timeStamp, screen_name], function(err) {
+		          if (err) {
+		            return console.error("Something " + err.message + " error happens.");
+		          }
+		          //console.log(`Row(s) updated: ${this.changes}`);
+		           
+		        });
 
-			totalWords = readTextFile("file://"+pwd+"wordtotal");
+		        // and tweet at them
+		        tweetAt = true;
+		        
+		      } else {
+		        //console.log("it is too soon to tweet at this user");
+		      }
+		    }
+		    else{
+		    	// if user is not found
+		      	// new screen name
+		      	// we have never tweeted to them before
+		        
+		      	// enter them into db
+		      	db.run(`INSERT INTO screen_names (user, timestamp) VALUES(?, ?)`, [screen_name,timeStamp], function(err) {
+		        	if (err) {
+		          		return console.log(err.message);
+		        	}
+		        	// get the last insert id
+		        	console.log(`A row has been inserted with rowid ${this.lastID}`);
+		      });
 
-			var message = "@" + screen_name + ": " + randomName() + " (" + randomYear() + "). \"" 
-						+ randomTitle() + ".\" " + randomPublication() + " vol. " 
-						+ (volumeNumber + 2) + ", no. " + (issueNumber + 1) + ": pp." + totalWords + "-";
+		      // and tweet at them
+		      tweetAt = true;
+		    }
+		  }
 
-			totalWords = Number(totalWords) + message.split(" ").length - 1;
+		  if(tweetAt){
+		    // consider loading these screen names from external file
+			// https://stackoverflow.com/questions/30764424/insert-string-at-line-number-nodejs
+			if(screen_name != "tomscott" &&
+			   screen_name != "nitelich" &&
+			   screen_name != "nihilistanarch" &&
+			   screen_name != "GetMiloaLife" &&
+			   screen_name != "JRWStormy" &&
+			   screen_name != "epinardscaramel" &&
+			   screen_name != "unnamedculprit" &&
+			   screen_name != "BenjiBorastero"){
 
-			fs.writeFile(pwd+"wordtotal", totalWords, function(err) { 
-			});
+				totalWords = readTextFile("file://"+pwd+"wordtotal");
 
-			message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*/;
+				var message = "@" + screen_name + ": " + randomName() + " (" + randomYear() + "). \"" 
+							+ randomTitle() + ".\" " + randomPublication() + " vol. " 
+							+ (volumeNumber + 2) + ", no. " + (issueNumber + 1) + ": pp." + totalWords + "-";
 
-			t.post('statuses/update',{"status": message, "in_reply_to_status_id": in_reply_to_status_id,
-			"auto_populate_reply_metadata": true}, function(req, res) {
-			        //console.log(res);
-			});
-		}
+				totalWords = Number(totalWords) + message.split(" ").length - 1;
+
+				fs.writeFile(pwd+"wordtotal", totalWords, function(err) { 
+				});
+
+				message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*/;
+
+				t.post('statuses/update',{"status": message, "in_reply_to_status_id": in_reply_to_status_id,
+				"auto_populate_reply_metadata": true}, function(req, res) {
+				        //console.log(res);
+
+				        // overwrite value of file "since_id"
+						// with ID of post we tweeted at
+						fs.writeFile(pwd+"since_id", in_reply_to_status_id, function(err) { 
+							//console.log(err);
+						});
+				});
+			}
+		  }
+		  
+		});
+		 
+		// close the database connection
+		db.close((err) => {
+		  if (err) {
+		    return console.error(err.message);
+		  }
+		  //console.log('Close the database connection.');
+		});
 
 
 	} else {
-		//"no recent tweets matching query"
+		//console.log("no recent tweets matching query");
 	}
 
 });
