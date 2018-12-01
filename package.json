@@ -1,6 +1,6 @@
 {
   "name": "randomfootnote",
-  "version": "0.1",
+  "version": "0.1.8",
   "description": "Generates titles for plausible academic papers",
   "main": "main.js",
   "scripts": {
