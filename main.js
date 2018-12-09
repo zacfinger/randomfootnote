@@ -40,22 +40,40 @@
 /*//////////////////////////////////////////////////////////////////////////////
 ///
 /// Deployment guide:
+///
+/// This guide assumes an Ubuntu 16.04 server with the following dependencies
+/// installed: 
+/// /// npm
+/// /// node
+/// /// sqlite3
+/// /// twitter
+/// /// xmlhttprequest
+/// /// moment
 /// 
-/// (1) Copy to repo on live server
-/// (2) Create file "word.total" with value "0"
-/// (3) Create file "pwd.js" with value:
-///     module.exports = "/path/to/current/working/dir/";
-/// (4) Create empty file "since.id"
-/// (5) Create file "config.js" with value:
+/// (1) Copy repo to live server by issuing the following command in your
+///     application directory:
+///     > git clone https://github.com/zacfinger/randomfootnote.git
+/// (2) Create file "config.js" with value:
+///
 ///     module.exports = {
 ///                          consumer_key: 'yourConsumerKey',
 ///                          consumer_secret: 'yourConsumerSecret',
 ///                          access_token_key: 'yourAccessTokenKey',
 ///                          access_token_secret: 'yourAccessTokenSecret'
 ///     }
+///
 ///     See Twitter's documentation for authenticating your application:
 ///     https://developer.twitter.com/en/docs/basics/
 ///     authentication/overview/oauth
+/// (3) Create file "pwd.js" with value:
+///     module.exports = "/path/to/current/working/dir/";
+/// (4) Create a new sqlite3 database called "screen_names.db" with table
+///     "screen_names" by running the below commands in the app directory:
+///     > sqlite3 screen_names.db
+///     sqlite> create table screen_names(user text, timestamp integer);
+///     Use ctrl-D to exit. Refer to https://www.sqlite.org/cli.html
+/// (2) Create file "word.total" with value "0"
+/// (4) Create empty file "since.id"
 /// (5) Set crontab to run at desired frequency
 /// 
 //////////////////////////////////////////////////////////////////////////////*/
@@ -176,6 +194,11 @@ var t = new Twitter(config);
 // for pulling the current working directory.
 // Working with local files, need PWD as string
 var pwd = require('./pwd.js'); 
+
+// TODO: replace all instances of pwd above with path below
+// https://discuss.atom.io/t/sqlite-cantopen-unable-to-open-database-file/26886/2
+const path = require('path');
+const dbPath = path.resolve(__dirname, 'screen_names.db');
 
 // Other dependencies
 // // Fs used for writing files
@@ -786,7 +809,7 @@ tweetGet.then(function(value){
 						"ddd MMM DD HH:mm:ss Z YYYY", "en").unix();
 
 		// open database in memory
-		let db = new sqlite3.Database('screen_names.db', sqlite3.OPEN_READWRITE, (err) => {
+		let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
 		  if (err) {
 		  	errorMessage += err.message;
 		    console.error(err.message);
@@ -872,13 +895,13 @@ tweetGet.then(function(value){
 				message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*/;
 
 				console.log(message);
-
+/*
 				t.post('statuses/update',{"status": message, "in_reply_to_status_id": in_reply_to_status_id,
 				"auto_populate_reply_metadata": true}, function(req, res) {
 				        //console.log(res);
 
 				        
-				});
+				});*/
 
 				// overwrite value of file "since.id"
 				// with ID of post we tweeted at
