@@ -4,3 +4,4 @@ since.id
 word.total
 screen_names.db
 /node_modules/*
+cron.log
