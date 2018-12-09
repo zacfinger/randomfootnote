@@ -64,17 +64,15 @@
 ///
 /// TO DO:
 ///
-/// TODO: Update .gitignore to actually include word.total and since.id
-/// // These files are not actually ignored because they exclude periods and
-/// // extensions in their names. Solution:
-/// // // (1) Add extensions locally (i.e., 'since.id' and 'word.total')
-/// // // (2) Add new files to .gitignore and remove old ones
-/// // // (3) On remote server stash everything and execute a 'git pull'
-/// // // (4) Create local files since.id and word.total with the same values
-/// // // (5) Delete 'since.id' and 'word.total' if they persisted remotely.
-/// 
-/// TODO: npm rebuild appears to completely fix the env on the remote server
+/// TODO: https://github.com/creationix/nvm#usage
+/// // https://github.com/JeffreyWay/laravel-mix/issues/264
+/// // https://stackoverflow.com/questions/41960142/block-scoped-declarations-not-yet-supported-outside-strict-mode
+/// // https://stackoverflow.com/questions/5849402/how-can-you-execute-a-node-js-script-via-a-cron-job
 ///
+/// TODO: Consider passing arguments to the application that determine whether
+/// or not the tweet is actually made, i.e. if process.argv[2] = 0 the t.post
+/// method is never invoked and the title is simply printed for testing purposes
+/// 
 /// TODO: If any exceptions are ever thrown these are somehow used in the
 /// randomTitle() method
 /// 
@@ -130,14 +128,6 @@
 /// TODO: Use regex to teach yourself regular expressions
 ///
 //////////////////////////////////////////////////////////////////////////////*/
-
-/// RESOLVED
-
-/// TODO: Main.js is now set up and working on a crontab on a different server,
-/// However the script seems to be tweeting at the "since.id" value even if the
-/// tweet has already been "replied to." Thus the bot will spam the most recent 
-/// tweet matching the query.
-/// RESOLVED: uses absolute path of file to read/write "since.id"
 
 /*//////////////////////////////////////////////////////////////////////////////
 
@@ -407,8 +397,8 @@ var names = [
 // institutions from whence authors come; biased towards computer-science-type
 // institutions ;-)
 var universityOf = [ "California" , "Illinois" , "Georgia" , "Massachusetts",
-					 "Michigan" , "North Carolina" , "Oregon" /*,"Arizona"*/ ];
-// university of new sioux nation press
+					 "Michigan" , "North Carolina" , "Oregon" 
+					 /*,"Arizona" , "The New Sioux Nation"*/ ];
 
 var somethingUniversity = [ "Oxford", "Harvard", "Cambridge", "Yale"
 /*, "Portland State", "Trump"*/ ];
