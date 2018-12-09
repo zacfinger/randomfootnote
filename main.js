@@ -1,6 +1,6 @@
 /*//////////////////////////////////////////////////////////////////////////////
 ///
-///  Postmodern Article Citation Generator v0.1.8.12
+///  Postmodern Article Citation Generator v0.2.0
 ///  (GPL-3.0) #NanoGenMo 2018 ZacFinger.com
 ///  https://github.com/zacfinger/randomfootnote/
 ///  https://twitter.com/randomfootnote
@@ -895,13 +895,13 @@ tweetGet.then(function(value){
 				message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*/;
 
 				console.log(message);
-/*
+
 				t.post('statuses/update',{"status": message, "in_reply_to_status_id": in_reply_to_status_id,
 				"auto_populate_reply_metadata": true}, function(req, res) {
 				        //console.log(res);
 
 				        
-				});*/
+				});
 
 				// overwrite value of file "since.id"
 				// with ID of post we tweeted at
