@@ -43,12 +43,11 @@
 ///
 /// This guide assumes an Ubuntu 16.04 server with the following dependencies
 /// installed: 
-/// /// npm
-/// /// node
-/// /// sqlite3
-/// /// twitter
-/// /// xmlhttprequest
-/// /// moment
+/// // node
+/// // sqlite3
+/// // twitter
+/// // xmlhttprequest
+/// // moment
 /// 
 /// (1) Copy repo to live server by issuing the following command in your
 ///     application directory:
@@ -82,10 +81,8 @@
 ///
 /// TO DO:
 ///
-/// TODO: https://github.com/creationix/nvm#usage
-/// // https://github.com/JeffreyWay/laravel-mix/issues/264
-/// // https://stackoverflow.com/questions/41960142/block-scoped-declarations-not-yet-supported-outside-strict-mode
-/// // https://stackoverflow.com/questions/5849402/how-can-you-execute-a-node-js-script-via-a-cron-job
+/// TODO: Add node_modules and other dependencies to the .gitignore file so that
+/// the code can be more easily deployed and redeployed.
 ///
 /// TODO: Consider passing arguments to the application that determine whether
 /// or not the tweet is actually made, i.e. if process.argv[2] = 0 the t.post
