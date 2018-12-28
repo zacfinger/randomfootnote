@@ -1,6 +1,6 @@
 /*
 
-
+// do all architectural styles
 
 */
 
