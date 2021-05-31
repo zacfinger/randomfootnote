@@ -1,6 +1,6 @@
 {
   "name": "randomfootnote",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Generates titles for plausible academic papers",
   "main": "main.js",
   "scripts": {
@@ -16,6 +16,8 @@
   "author": "Zac Finger",
   "license": "GPL-3.0",
   "dependencies": {
+    "axios": "^0.21.1",
+    "cheerio": "^1.0.0-rc.9",
     "moment": "^2.22.2",
     "sqlite3": "^4.0.4",
     "twitter": "^1.7.1",
