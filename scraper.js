@@ -36,13 +36,23 @@ var adjectives = [];
             // split by hyphen if one exists
             var prefixAndMovement = lastWord.split("-");
 
-            // if word not already present in art movements array
+            if (prefixAndMovement.length > 1) {
+
+                var prefix = prefixAndMovement[0];
+                lastWord = prefixAndMovement[1];
+
+                if(!prefixes.includes(prefix)) {
+                    prefixes.push(prefix);
+                }
+            }
+
             if(!artMovements.includes(lastWord)) {
                 artMovements.push(lastWord);
             }
         }
     });
 
-    console.log(artMovements)
+    console.log(artMovements);
+    console.log(prefixes);
 
 })()
