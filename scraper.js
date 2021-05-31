@@ -18,6 +18,8 @@ var prefixes =
 
 var adjectives = [];
 
+var movementsToRemove = [];
+
 (async () => {
     const $ = await fetchData();
         
@@ -27,7 +29,7 @@ var adjectives = [];
         var movementWords = $(element).text().split(" ");
         
         // get last word in array
-        // TODO: Account for proper nouns
+        // TODO: Account for proper nouns, i.e. "Pre-Raphaelitism"
         var lastWord = movementWords[movementWords.length - 1].toLowerCase();
         
         // if last word is an -ism
@@ -36,8 +38,10 @@ var adjectives = [];
             // split by hyphen if one exists
             var prefixAndMovement = lastWord.split("-");
 
+            // if a hyphenated prefix exists
             if (prefixAndMovement.length > 1) {
 
+                // add to array of prefixes
                 var prefix = prefixAndMovement[0];
                 lastWord = prefixAndMovement[1];
 
@@ -52,7 +56,41 @@ var adjectives = [];
         }
     });
 
-    console.log(artMovements);
-    console.log(prefixes);
+    // separate derivative movements and their prefixes
+    // i.e., modernism --> post-modernism
+    // TODO: account for 'realism' vs 'surrealism'
+    artMovements.forEach(movement => {
+
+        artMovements.forEach(otherMovement => {
+            // if this is a derivative of another movement
+            if(otherMovement != movement 
+                && otherMovement.endsWith(movement)) {
+                
+                // extract prefix
+                var index = otherMovement.indexOf(movement);
+                prefix = otherMovement.substring(0, index);
+                
+                // add prefix to array
+                if(!prefixes.includes(prefix)){
+                    prefixes.push(prefix);
+                }
+
+                // track movements to remove
+                if(!movementsToRemove.includes(otherMovement)){
+                    movementsToRemove.push(otherMovement);
+                }
+            }
+        });
+
+        /* if movement starts with one of the prefixes
+        prefixes.forEach(prefix => {
+            if(movement.startsWith(prefix)){
+                console.log(movement);
+        }
+    })*/
+    });
+
+    //console.log(artMovements);
+    //console.log(prefixes);
 
 })()
