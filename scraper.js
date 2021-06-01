@@ -1,6 +1,7 @@
 const siteUrl = "https://en.wikipedia.org/wiki/List_of_art_movements";
 const axios = require("axios");
 const cheerio = require("cheerio");
+var thesaurus = require("thesaurus");
 
 const fetchData = async () => {
   const result = await axios.get(siteUrl);
@@ -19,6 +20,17 @@ var prefixes =
 var adjectives = [];
 
 var movementsToRemove = [];
+
+function rootWordInDictionary(someWord) {
+
+    // remove "-ism" from end 
+    var index = someWord.indexOf("ism");
+    var prefix = someWord.substring(0, index);
+    
+    // if word is in dictionary
+    return thesaurus.find(prefix).length > 0;
+
+}
 
 (async () => {
     const $ = await fetchData();
@@ -50,44 +62,68 @@ var movementsToRemove = [];
                 }
             }
 
+
+
+            // add movement to list
             if(!artMovements.includes(lastWord)) {
                 artMovements.push(lastWord);
             }
         }
     });
 
-    // separate derivative movements and their prefixes
-    // i.e., modernism --> post-modernism
-    // TODO: account for 'realism' vs 'surrealism'
+    // extract prefixes from derivative movements
+    // i.e., modernism --> postmodernism yields "post-"
+    // TODO: doesn't work for massurrealism vs surrealism
     artMovements.forEach(movement => {
 
         artMovements.forEach(otherMovement => {
             // if this is a derivative of another movement
+            // i.e., "postmodernism" ends with "modernism"
             if(otherMovement != movement 
                 && otherMovement.endsWith(movement)) {
-                
-                // extract prefix
-                var index = otherMovement.indexOf(movement);
-                prefix = otherMovement.substring(0, index);
-                
-                // add prefix to array
-                if(!prefixes.includes(prefix)){
-                    prefixes.push(prefix);
-                }
 
-                // track movements to remove
-                if(!movementsToRemove.includes(otherMovement)){
-                    movementsToRemove.push(otherMovement);
+                // only extract prefix and movement
+                // if prefix + movement without "ism" is a word in dictionary
+                // this allows for "realism" vs "surrealism"
+                // by checking if root "sur" in dictionary
+                // will fail if root is "surreal"
+                if(!rootWordInDictionary(otherMovement)) {
+
+                    // extract prefix
+                    index = otherMovement.indexOf(movement);
+                    prefix = otherMovement.substring(0, index);
+                    
+                    // add prefix to array
+                    if(!prefixes.includes(prefix)){
+                        prefixes.push(prefix);
+                    }
+
+                    // track movements to remove
+                    if(!movementsToRemove.includes(otherMovement)){
+
+                        movementsToRemove.push(otherMovement);
+                    }
                 }
             }
         });
+    });
 
-        /* if movement starts with one of the prefixes
+    // remove movements whose prefix and root are saved
+    artMovements = artMovements.filter(e => !movementsToRemove.includes(e));
+
+    // extract prefixes which did not have prefix with hyphen
+    // iterate through each movement
+    artMovements.forEach(movement => { 
+
+        // if movement starts with one of the found prefixes
         prefixes.forEach(prefix => {
             if(movement.startsWith(prefix)){
                 console.log(movement);
-        }
-    })*/
+                /*if(!rootWordInDictionary(movement)) {
+
+                }*/
+            }
+        })
     });
 
     //console.log(artMovements);
