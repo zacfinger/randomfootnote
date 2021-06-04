@@ -23,7 +23,10 @@ var prefixes =
 // from acb's original pb script:
 [ "post","neo","sub","pre" ];
 
-var adjectives = [];
+var adjectives = 
+// from acb's original pb script:
+[ "structural" , "semiotic" , "modern" , "constructive" ,
+"semantic" , "deconstructive" , "patriarchial" , "conceptual" , "material" ];
 
 var movementsToRemove = [];
 
@@ -49,7 +52,6 @@ const getIdeologies = async() => {
     $(".mw-parser-output > ul > li").each((index, element) => {
 
         // get ideology as array of strings separated by \n
-        // TODO: trim() on getArtMovements() as well
         var ideologyLines = $(element).text().trim().split("\n");
         
         ideologyLines.forEach(line => {
@@ -59,10 +61,15 @@ const getIdeologies = async() => {
 
             // get last word in array
             // TODO: Account for proper nouns, i.e. "Marxism"
-            // // User "list of ideologies named after people"
+            // // Use "list of ideologies named after people"
             var lastWord = ideologyWords[ideologyWords.length - 1].toLowerCase();
 
             if (lastWord.slice(-3) == "ism"){
+
+                // for each word before
+                // if word ends in "ism" or "ist"
+                // check for prefix and add to ideologies array
+                // else add to adjectives array
                 
                 // split by hyphen if one exists
                 var prefixAndMovement = lastWord.split("-");
@@ -133,6 +140,20 @@ const getArtMovements = async() => {
             if(!artMovements.includes(lastWord)) {
                 artMovements.push(lastWord);
             }
+
+            if(movementWords.length > 1)
+            {
+                for(var i = 0; i < movementWords.length - 1; i++){
+                    
+                    var word = movementWords[i].toLowerCase();
+
+                    // TODO: Adjectives that are also movements or ideologies
+                    // For example, "socialist"
+                    if(!adjectives.includes(word)){
+                        adjectives.push(word);
+                    }
+                }
+            }
         }
     });
 
@@ -194,13 +215,12 @@ const getArtMovements = async() => {
                             
                             movementsToRemove.push(movement);
                         }
-
                     }
-
                 }
             }
         })
     });
+    
     console.log(movementsToRemove);
 
     // remove movements whose prefix and root are saved
@@ -212,11 +232,12 @@ const getArtMovements = async() => {
 
 (async () => {
     
-    await getArtMovements();
-    //await getIdeologies();
+    //await getArtMovements();
+    await getIdeologies();
 
-    console.log(artMovements);
+    //console.log(artMovements);
+    console.log(ideologies);
     console.log(prefixes);
-    
+    //console.log(adjectives);
 
 })()
