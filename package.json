@@ -19,7 +19,10 @@
     "axios": "^0.21.1",
     "cheerio": "^1.0.0-rc.9",
     "moment": "^2.22.2",
-    "sqlite3": "^4.0.4",
+    "node-pre-gyp": "^0.17.0",
+    "pos": "^0.4.2",
+    "sqlite3": "^4.2.0",
+    "thesaurus": "0.0.1",
     "twitter": "^1.7.1",
     "xmlhttprequest": "^1.8.0"
   }
