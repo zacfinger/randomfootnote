@@ -2,6 +2,7 @@ const artMovementUrl = "https://en.wikipedia.org/wiki/List_of_art_movements";
 const ideologyUrl = "https://en.wikipedia.org/wiki/List_of_political_ideologies";
 const axios = require("axios");
 const cheerio = require("cheerio");
+var pos = require("pos");
 var thesaurus = require("thesaurus");
 
 const fetchData = async (siteUrl) => {
@@ -69,6 +70,25 @@ const getIdeologies = async() => {
 
                 if (lastWord.slice(-3) == "ism"){
 
+                    // check for two word ideologies, i.e. "De Leonism"
+                    if(ideologyWords.length > 1){
+                        if(
+                            (lastWord.toLowerCase() == "leonism" && ideologyWords[ideologyWords.length - 2].toLowerCase().endsWith("de"))
+                         || (lastWord.toLowerCase() == "worldism" && ideologyWords[ideologyWords.length - 2].toLowerCase().endsWith("third"))
+                        ){
+                            
+                            console.log(lastWord);
+
+                            ideologyWords[ideologyWords.length - 2] = ideologyWords[ideologyWords.length - 2].toLowerCase() + " " + lastWord.toLowerCase();
+
+                            lastWord = ideologyWords[ideologyWords.length - 2];
+
+                            console.log(lastWord);
+
+                            ideologyWords.pop();
+                        }
+                    }
+
                     // split by hyphen if one exists
                     // TODO: Sometimes hyphen is needed "Post-impressionism" vs "Postmodernism"
                     // For example "Cubo-Futurism", observe frequency of word using hyphens
@@ -96,7 +116,21 @@ const getIdeologies = async() => {
                     // Every single word in front of the final word is considered a single adjective
                     if(ideologyWords.length > 1)
                     {
-                        var word = ideologyWords.slice(0, ideologyWords.length - 1).toString().replace(/[,]+/g, " ").trim();
+                        var index = -1;
+
+                        // filter out words like "of" and "against"
+                        for(var i = ideologyWords.length - 1; i >= 0; i--){
+                            var word = ideologyWords[i];
+                            var tagger = new pos.Tagger();
+                            var tags = tagger.tag([word]);
+                            if(tags[0][1] == 'CC' || tags[0][1] == 'DT' || tags[0][1] == 'IN'){
+                                index = i;
+                                //exit for
+                                break;
+                            }
+                        }
+
+                        var word = ideologyWords.slice(index + 1, ideologyWords.length - 1).toString().replace(/[,]+/g, " ").trim();
                         // TODO: Adjeactives such as 
                         // // "Movement for"
                         // // "Maoism–Third"
@@ -349,7 +383,7 @@ const getArtMovements = async() => {
     // https://en.wikipedia.org/wiki/List_of_academic_fields
     
     await getArtMovements();
-    await getIdeologies();
+    //await getIdeologies();
 
     prefixes.sort();
     adjectives.sort();
@@ -361,7 +395,7 @@ const getArtMovements = async() => {
     for(var i=0;i<adjectives.length;i++){
         console.log(adjectives[i]);
     }
-
+    
     for(var i=0;i<artMovements.length;i++){
         console.log(artMovements[i]);
     }
