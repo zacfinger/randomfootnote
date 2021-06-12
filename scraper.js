@@ -1,3 +1,22 @@
+/*//////////////////////////////////////////////////////////////////////////////
+///
+/// TO DO:
+/// 
+/// TODO: Maintain each string in array as lower-case. Determine if 
+/// capitalization is necessary by maintaining count of times term is 
+/// capitalized or not, and favoring one or the other in the end. This ensures
+/// proper nouns are always capitalized if they are in the source content.
+///
+/// TODO: Enforce hyphenization on prefixes by maintaining count of times the 
+/// prefix is hyphenated or not, and favoring one or the other in the end.
+///
+/// TODO: Account for "Antidisestablishmentarianism" - it will never occur with
+/// the current algorithm
+/// 
+/// TODO: Determine why "" appears in prefixes
+///
+//////////////////////////////////////////////////////////////////////////////*/
+
 const artMovementUrl = "https://en.wikipedia.org/wiki/List_of_art_movements";
 const ideologyUrl = "https://en.wikipedia.org/wiki/List_of_political_ideologies";
 const axios = require("axios");
@@ -27,7 +46,9 @@ var prefixes =
 var adjectives = 
 // from acb's original pb script:
 [ "structural" , "semiotic" , "modern" , "constructive" ,
-"semantic" , "deconstructive" , "patriarchial" , "conceptual" , "material" ];
+"semantic" , "deconstructive" , "patriarchial" , "conceptual" , "material" , 
+// implied from acb's art movements
+"social" , "socialist" ];
 
 function rootWordInDictionary(someWord) {
 
@@ -76,34 +97,36 @@ const getIdeologies = async() => {
                             (lastWord.toLowerCase() == "leonism" && ideologyWords[ideologyWords.length - 2].toLowerCase().endsWith("de"))
                          || (lastWord.toLowerCase() == "worldism" && ideologyWords[ideologyWords.length - 2].toLowerCase().endsWith("third"))
                         ){
-                            
-                            console.log(lastWord);
-
                             ideologyWords[ideologyWords.length - 2] = ideologyWords[ideologyWords.length - 2].toLowerCase() + " " + lastWord.toLowerCase();
 
                             lastWord = ideologyWords[ideologyWords.length - 2];
-
-                            console.log(lastWord);
 
                             ideologyWords.pop();
                         }
                     }
 
-                    // split by hyphen if one exists
-                    // TODO: Sometimes hyphen is needed "Post-impressionism" vs "Postmodernism"
-                    // For example "Cubo-Futurism", observe frequency of word using hyphens
-                    // Or whether char after hyphen is vowel vs consonant
-                    var prefixAndMovement = lastWord.split("-");
+                    // account for ideology "saint-simonianism"
+                    if(lastWord.toLowerCase() != "saint-simonianism"){
+                        // split by hyphen if one exists
+                        // TODO: Sometimes hyphen is needed "Post-impressionism" vs "Postmodernism"
+                        // For example "Cubo-Futurism", observe frequency of word using hyphens
+                        // Or whether char after hyphen is vowel vs consonant
+                        var index = lastWord.lastIndexOf("-");
 
-                    // if a hyphenated prefix exists
-                    if (prefixAndMovement.length > 1) {
+                        // account for non-standard hyphenization
+                        if(index < 0){
+                            index = lastWord.lastIndexOf("–")
+                        }
 
-                        // add to array of prefixes
-                        var prefix = prefixAndMovement[0];
-                        lastWord = prefixAndMovement[1];
+                        // if a hyphenated prefix exists
+                        if(index > -1){
+                            var prefix = lastWord.substring(0, index);
+                            lastWord = lastWord.substring(index + 1);
 
-                        if(!prefixes.includes(prefix)) {
-                            prefixes.push(prefix);
+                            // add to array of prefixes
+                            if(!prefixes.includes(prefix)) {
+                                prefixes.push(prefix);
+                            }
                         }
                     }
 
@@ -120,7 +143,7 @@ const getIdeologies = async() => {
 
                         // filter out words like "of" and "against"
                         for(var i = ideologyWords.length - 1; i >= 0; i--){
-                            var word = ideologyWords[i];
+                            var word = ideologyWords[i].toLowerCase();
                             var tagger = new pos.Tagger();
                             var tags = tagger.tag([word]);
                             if(tags[0][1] == 'CC' || tags[0][1] == 'DT' || tags[0][1] == 'IN'){
@@ -131,11 +154,7 @@ const getIdeologies = async() => {
                         }
 
                         var word = ideologyWords.slice(index + 1, ideologyWords.length - 1).toString().replace(/[,]+/g, " ").trim();
-                        // TODO: Adjeactives such as 
-                        // // "Movement for"
-                        // // "Maoism–Third"
-                        // // "Third"
-                        // // Marxism-De
+                        
                         if(!adjectives.includes(word)){
                             adjectives.push(word);
                         }
@@ -158,14 +177,14 @@ const getIdeologies = async() => {
             if(otherMovement != movement
                 && otherMovement.endsWith(movement)
                 // TODO: this isn't really the best way to do this
-                && movement != "anationalism"       // created prefix "ultr-"
-                && otherMovement != "veganarchism"  // created prefix "veg-"
-                && otherMovement != "panarchism"    // created movement "archism"
-                && otherMovement != "eurasianism"   // created prefix "eur-"
-                && otherMovement != "impossibilism" // created prefix "im-"
-                && otherMovement != "intactivism"   // created prefix "int-"
-                && otherMovement != "confederalism" // created prefix "con-"
-                && otherMovement != "antidisestablishmentarianism"
+                && movement.toLowerCase() != "anationalism"       // created prefix "ultr-"
+                && otherMovement.toLowerCase() != "veganarchism"  // created prefix "veg-"
+                && otherMovement.toLowerCase() != "panarchism"    // created movement "archism"
+                && otherMovement.toLowerCase() != "eurasianism"   // created prefix "eur-"
+                && otherMovement.toLowerCase() != "impossibilism" // created prefix "im-"
+                && otherMovement.toLowerCase() != "intactivism"   // created prefix "int-"
+                && otherMovement.toLowerCase() != "confederalism" // created prefix "con-"
+                && otherMovement.toLowerCase() != "antidisestablishmentarianism"
                                                     // created prefix "antidis-"
             ){
                 // extract prefix
@@ -198,26 +217,29 @@ const getIdeologies = async() => {
                 // TODO: should find a better way for these edge cases
                 // TODO: Scrape wikipedia for the title and see if 404
                 if(inDictionary(rootMovement) 
-                    && rootMovement != "ism"
-                    && rootMovement != "sm"
-                    || rootMovement == "nomism"
-                    || rootMovement == "montanism"
-                    || rootMovement == "gaianism"
-                    || rootMovement == "culturalism"
+                    && rootMovement.toLowerCase() != "ism"
+                    && rootMovement.toLowerCase() != "sm"
+                    || rootMovement.toLowerCase() == "nomism"
+                    || rootMovement.toLowerCase() == "montanism"
+                    || rootMovement.toLowerCase() == "gaianism"
+                    || rootMovement.toLowerCase() == "culturalism"
                 ){
                     if(!ideologies.includes(rootMovement)){
                         ideologies.push(rootMovement);
-                        
-                        // track movements to remove
-                        if(!movementsToRemove.includes(movement)){
+                    }
 
-                            movementsToRemove.push(movement);
-                        }
+                    // track movements to remove
+                    if(!movementsToRemove.includes(movement)){
+
+                        movementsToRemove.push(movement);
                     }
                 }
             }
         });
     });
+
+    // TODO: While loop runs until no more prefixes/movements found
+    // Loops through both of the above for loops
 
     console.log(movementsToRemove);
 
@@ -302,7 +324,7 @@ const getArtMovements = async() => {
             if(otherMovement != movement 
                 && otherMovement.endsWith(movement)
                 // TODO: doesn't work for massurrealism vs surrealism
-                && otherMovement != "massurrealism" // created prefixes "massur-" and "mas-"
+                && otherMovement.toLowerCase() != "massurrealism" // created prefixes "massur-" and "mas-"
             ) {
 
                 // only extract prefix and movement
@@ -339,7 +361,7 @@ const getArtMovements = async() => {
         // if movement starts with one of the found prefixes
         prefixes.forEach(prefix => {
             if(movement.startsWith(prefix)
-                && movement != "neoism" // creates movement "-ism"
+                && movement.toLowerCase() != "neoism" // creates movement "-ism"
             ){
                 // find string after prefix
                 var rootMovement = movement.substring(prefix.length);
@@ -348,18 +370,21 @@ const getArtMovements = async() => {
 
                     if(!artMovements.includes(rootMovement)){
                         artMovements.push(rootMovement);
-                        
-                        // track movements to remove
-                        if(!movementsToRemove.includes(movement)){
+                    }
+
+                    // track movements to remove
+                    if(!movementsToRemove.includes(movement)){
                             
-                            movementsToRemove.push(movement);
-                        }
+                        movementsToRemove.push(movement);
                     }
                 }
             }
         })
     });
     
+    // TODO: While loop runs until no more prefixes/movements found
+    // Loops through both of the above for loops
+
     console.log(movementsToRemove);
 
     // remove movements whose prefix and root are saved
@@ -383,25 +408,30 @@ const getArtMovements = async() => {
     // https://en.wikipedia.org/wiki/List_of_academic_fields
     
     await getArtMovements();
-    //await getIdeologies();
+    await getIdeologies();
 
     prefixes.sort();
     adjectives.sort();
-    
-    for(var i=0;i<prefixes.length;i++){
-        console.log(prefixes[i]);
-    }
 
-    for(var i=0;i<adjectives.length;i++){
-        console.log(adjectives[i]);
-    }
-    
-    for(var i=0;i<artMovements.length;i++){
-        console.log(artMovements[i]);
-    }
+    prefixes.forEach(prefix => {
+        console.log(prefix); //57
+    });
 
-    for(var i=0;i<ideologies.length;i++){
-        console.log(ideologies[i]);
-    }
+    adjectives.forEach(adj => {
+        console.log(adj); //278
+    });
+
+    artMovements.forEach(movement => {
+        console.log(movement); //42
+    });
+
+    ideologies.forEach(ideology => {
+        console.log(ideology); //371
+    });
+
+    console.log(prefixes.length);
+    console.log(adjectives.length);
+    console.log(artMovements.length);
+    console.log(ideologies.length);
 
 })()
