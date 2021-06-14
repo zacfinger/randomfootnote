@@ -1,7 +1,7 @@
 /*//////////////////////////////////////////////////////////////////////////////
 ///
-///  Postmodern Article Citation Generator v0.2.018122810
-///  (GPL-3.0) #NanoGenMo 2018 ZacFinger.com
+///  Postmodern Article Citation Generator v0.2.1
+///  (GPL-3.0) #NanoGenMo 2018-2021 ZacFinger.com
 ///  https://github.com/zacfinger/randomfootnote/
 ///  https://twitter.com/randomfootnote
 ///  NodeJS port of Postmodernism Generator by:
@@ -48,6 +48,7 @@
 /// // twitter
 /// // xmlhttprequest
 /// // moment
+/// // randomBytes
 /// 
 /// (1) Copy repo to live server by issuing the following command in your
 ///     application directory:
@@ -83,13 +84,6 @@
 /*//////////////////////////////////////////////////////////////////////////////
 ///
 /// TO DO:
-///
-/// TODO: Add node_modules and other dependencies to the .gitignore file so that
-/// the code can be more easily deployed and redeployed.
-///
-/// TODO: Consider passing arguments to the application that determine whether
-/// or not the tweet is actually made, i.e. if process.argv[2] = 0 the t.post
-/// method is never invoked and the title is simply printed for testing purposes
 /// 
 /// TODO: If any exceptions are ever thrown these are somehow used in the
 /// randomTitle() method
@@ -210,6 +204,7 @@ const fs = require('fs');
 var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 const moment = require('moment');
 const sqlite3 = require('sqlite3').verbose();
+var randomBytes = require('randombytes');
 
 // whether or not to execute the tweet is
 // based on how long ago we tweeted the user
@@ -249,27 +244,23 @@ var totalWords;
 ///
 //////////////////////////////////////////////////////////////////////////////*/
 
+// get external data produced by scraper.js
+var data = require("./data");
+
 // set of prefixes to use in ideology 
 // and art movement constructionisms
 // example: postcapitalism, neocapitalism, etc.
-var prefixes = [ "post","neo","sub","pre"/*, "proto", "hyper"*/];
+var prefixes = data.prefixes; 
 
 // set of base ideologies and movements from 
 // which to create terms such as "semiotic modernism"
-var ideologies = 
-[ "capitalism" , "Marxism" , "socialism" , "feminism" , "libertarianism" , 
-  "objectivism" , "rationalism" , "nationalism" , "nihilism" 
-  /*, "#globalism", "#trumpism", "#accelerationism"*/];
-var artMovements = 
-[ "surrealism" , "modernism" , "realism" , "social realism" , 
-  "socialist realism" , "constructivism" , "expressionism"
-  /*, "futurism", "retrofuturism", "afrofuturism" */ ];
+var ideologies = data.ideologies;
+var artMovements = data.artMovements;
 
 // array of adjectives
 // selected at random to modify
 // ideologies or art movements
-var adjectivesThree = [	"structural" , "semiotic" , "modern" , "constructive" ,
-"semantic" , "deconstructive" , "patriarchial" , "conceptual" , "material" ];
+var adjectivesThree = data.adjectives;
 
 // array of writers and philosophers
 // used as keys when querying the "concepts" object
@@ -284,7 +275,7 @@ var intellectuals = ["Lacan" , "Derrida" , "Baudrillard" , "Sartre" ,
 // concepts object containing an array of terms
 // associated to each intellectual key
 var concepts = {
-
+/*
 	"Lacan": ["obscurity"],
 	"Derrida": ["reading"],
 	"Baudrillard": ["simulation","simulacra","hyperreality"],
@@ -295,7 +286,7 @@ var concepts = {
 	"Bataille":["'powerful communication'"],
 	"Lyotard": ["narrative"],
 	"Sontag": ["camp"]
-
+*/
 };
 
 // array of writers and artists
@@ -304,7 +295,7 @@ var concepts = {
 // which generated an entire paper including citations to "citable" artists.
 // for the present purposes this could simply be an array of artists
 // but randomartist() and other calls to citableartist will have to be fixed
-var citableArtists = [	"Burroughs" , "Joyce" , "Gibson" , "Stone" , "Pynchon" ,
+var citableArtists = [ "Burroughs" , "Joyce" , "Gibson" , "Stone" , "Pynchon" ,
 "Spelling" , "Tarantino" , "Madonna", "Rushdie" , "Eco" ];
 var uncitableArtists = [ "Koons" , "Mapplethorpe" , "Glass" , "Lynch" , 
 "Fellini" , "Cage" , "McLaren" ];
@@ -338,14 +329,14 @@ var bigAbstThings = ["culture" , "language" , "art" , "reality" , "truth" ,
 // word arrays from which random indices 
 // are drawn in the randomTitle() methods
 var adjectivesTwo = [ "capitalist" , randomArrayIndex(adjectivesThree) , 
-                      trimE(randomArrayIndex(adjectivesThree)) , "cultural" , 
+                      trimE(randomArrayIndex(adjectivesThree)) + "ist", "cultural" , 
                       "dialectic" , "textual" ];
 var adjectives = [ randomArrayIndex(adjectivesTwo) , 
                   (randomArrayIndex(prefixes) + 
                   	randomArrayIndex(adjectivesTwo))];
 var abstNounsTwo = [ "sublimation", trimE(randomArrayIndex(adjectivesThree)) + 
                      "ism" , "construction",	"appropriation", "materialism",	
-                     "situationism"];
+                     "situationism", /* added by zacfinger: */ randomArrayIndex(ideologies)];
 var abstNouns = [ randomArrayIndex(abstNounsTwo) , "theory" , "discourse" ,
                   "narrative" , "de" + randomArrayIndex(abstNounsTwo)];
 var bigThings = ["society" , "class" , randomArrayIndex(bigAbstThings) , 
@@ -364,7 +355,7 @@ var candidTitles = [ randomArrayIndex(doingSomethingTos) + " " + randomArrayInde
 var terms = [termAboutIntellectual(randomArrayIndex(intellectuals)),
 			randomArrayIndex(adjectives) + " " + randomArrayIndex(abstNouns),
 			randomArrayIndex(adjectives) + " " + randomArrayIndex(abstNouns), 
-			randomArrayIndex(adjectives) + " " + randomArrayIndex(adjectives) + " theory",
+			twoAdjectives() + " theory",
 			"the " + randomArrayIndex(adjectives) + " paradigm of " + randomArrayIndex(bigNebulousThings),
 			randomArrayIndex(adjectives) + " " + randomArrayIndex(ideologies)];
 
@@ -458,13 +449,21 @@ var departmentTopics = [ // "Social Technology",
 ///
 //////////////////////////////////////////////////////////////////////////////*/
 
+// theoretically improved randomization function
+// returns random number between 0...1
+function randomPlusPlus(){
+	return (parseInt(randomBytes(2).toString('hex'), 16) / (256*256));
+}
+
 // for an array arr returns a random element from arr
 // embedded in a try/catch on the off chance 
 // one of the article titles will have an exception in it
 function randomArrayIndex(arr){
 	
 	try{
-		var index = Math.floor((Math.random() * arr.length));
+		var rand = randomPlusPlus();
+
+		var index = Math.floor(rand * arr.length);
 
 		volumeNumber = index * 2;
 
@@ -474,6 +473,17 @@ function randomArrayIndex(arr){
 		errorMessage += err.message;
 		return err.message;
 	}
+}
+
+function twoAdjectives(){
+	var adj1 = randomArrayIndex(adjectives);
+	var adj2 = adj1;
+
+	while(adj2.startsWith(adj1)){
+		adj2 = randomArrayIndex(adjectives);
+	}
+
+	return adj1 + " " + adj2;
 }
 
 // Capitalize first letter of every word in some string 'str'
@@ -488,12 +498,16 @@ function titleCase(str) {
    return splitStr.join(' '); 
 }
 
-// turns string "str" with value "deconstructive" into "deconstrucitivist"
+// turns string "str" with value "deconstructive" into "deconstrucitiv"
 // returns a string 
 function trimE (str){
 	// consider making this a regular expression
 	if(str[str.length-1] == "e"){
-		return str.substring(0,str.length-1) + "ist";
+		return str.substring(0,str.length-1);
+	}
+	// handle strings such as "individualist" --> "individual"
+	else if (str.slice(-3) == "ist"){
+		return str.substring(0, str.length-3);
 	}
 	return str;
 }
@@ -512,7 +526,13 @@ function makeConcept(intellectual){
 	if(concepts.hasOwnProperty(intellectual))
 		return randomArrayIndex(concepts[intellectual]);
 
-	return "neomodernist";
+	var str = randomArrayIndex(adjectivesThree);
+
+	str += " " + randomArrayIndex(["", randomArrayIndex(prefixes)]);
+
+	str += randomArrayIndex([randomArrayIndex(ideologies),randomArrayIndex(artMovements)]);
+
+	return str;
 
 }
 
@@ -554,12 +574,10 @@ function randomTitle(){
 		_randomTitle = detectUndefined(capitalizeFirstLetter(randomTitleTwo()));
 	}
 
-	if(Math.random() >= 0.5){
+	if(randomPlusPlus() >= 0.5){
 
 		_randomTitle = detectUndefined(capitalizeFirstLetter(
 		titleCase(randomCandidTitle()) + ": " + capitalizeFirstLetter(_randomTitle)));
-
-		
 	}
 
 	return _randomTitle; 
@@ -573,25 +591,45 @@ function randomTitle(){
 // movement, the rest of the time it will be a newly constructed term via
 // the newTerm() method such as 'predeconstructivist rationalism'
 function randomTitleTwo(){
-	var rand = Math.random();
 
-	issueNumber = Math.floor(rand * 10);
+	var rand = randomPlusPlus();
+	
+	issueNumber = Math.floor(rand * 10) + 1;
 
-	if(rand >= 2/3){
+	if(rand >= 1/2){
 		vsubject = newTerm();
-	} else if (rand >= 1/3) {
-		vsubject = randomArrayIndex(ideologies);
-	} else {
+	} else if (rand >= 1/6) {
 		vsubject = randomArrayIndex(artMovements);
+	} else {
+		vsubject = randomArrayIndex(ideologies);
 	}
 
-	vsubject2 = newTerm();
+	vsubject2 = vsubject;
+
+	if(rand >= 1/5){
+		while(vsubject2.startsWith(vsubject)) {
+			vsubject2 = newTerm();
+		}
+	} else {
+		while(vsubject2.startsWith(vsubject)) {
+			vsubject2 = randomArrayIndex(ideologies);
+		}
+	}
+
+	var vsubject3 = vsubject2;
+
+	while(vsubject3.startsWith(vsubject2)){
+		vsubject3 = newTerm();
+	}
 	
 	var titlesTwo = [
-	vsubject + " in the works of " + randomArrayIndex(citableArtists), 
-	vsubject + " in the works of " + randomArtist(),
-	twoTermTitle(vsubject,vsubject2),
-	threeTermTitle(vsubject,vsubject2,newTerm())
+		vsubject + " in the works of " + randomArrayIndex(citableArtists), 
+		vsubject + " in the works of " + randomArtist(),
+		vsubject2 + " in the works of " + randomArrayIndex(citableArtists),
+		twoTermTitle(vsubject,vsubject2),
+		twoTermTitle(vsubject,vsubject2),
+		twoTermTitle(vsubject,vsubject2),
+		threeTermTitle(vsubject,vsubject2,vsubject3)
 	];
 
 	return randomArrayIndex(titlesTwo);
@@ -600,7 +638,7 @@ function randomTitleTwo(){
 }
 
 function twoTermTitle(foo,bar){
-	if(Math.random() >= 0.5){
+	if(randomPlusPlus() >= 0.5){
 		return foo + " and " + bar; 
 	}
 
@@ -625,7 +663,7 @@ function randomCandidTitle(){
 }
 
 function randomArtist(){
-	if(Math.random() >= 0.5){
+	if(randomPlusPlus() >= 0.5){
 		return randomArrayIndex(citableArtists);
 	}
 
@@ -633,10 +671,19 @@ function randomArtist(){
 }
 
 function termAboutIntellectual(intellectual){
-	return intellectual + "ist " + makeConcept(intellectual);
+  var str = "";
+
+  if(intellectual == "Foucault"){
+    str = "Foucauldian";
+  }
+	else {
+    str = intellectual + "ist"; 
+  }
+  return str + " " + makeConcept(intellectual);
 }
 
 function newTerm(){
+
 	return randomArrayIndex(terms);
 }
 
@@ -649,12 +696,14 @@ function detectUndefined(str){
 	var words = str.split(" ");
 	var newStr = "";
 	for(var x=0;x<words.length;x++){
-		if(words[x] == "undefined")
-			words[x] = "'neomodernities'";
+		var temp = words[x];
 
-		newStr += words[x];
+		if(words[x].toLowerCase() == "undefined")
+			temp = pluralise(randomArrayIndex(prefixes) + "" + randomArrayIndex(ideologies));
 
-		if(x+1!=words.length)
+		newStr += temp;
+
+		if(x+1 < words.length)
 			newStr+=" ";
 	}
 	return newStr;
@@ -769,8 +818,11 @@ if(process.argv[2]!=null){
 
   // using process.argv[2] == null ensures previous
   // deployments will continue to function
-
+  
+  console.log("\n");
   console.log(randomTitle());
+  console.log("\n");
+
 }
 else 
 {
