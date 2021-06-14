@@ -13,7 +13,13 @@
 /// TODO: Account for "Antidisestablishmentarianism" - it will never occur with
 /// the current algorithm
 /// 
-/// TODO: Determine why "" appears in prefixes
+/// TODO: Determine why "" appears in adjectives
+///
+/// TODO: Separate array for adjectives that begin with prefixes. To be used in
+/// main.js when a prefix is appended to a random element from adjectivesTwo
+///
+/// TODO: For every adjective entered, if first word not part of speech = 
+/// proper noun, make lower-case.
 ///
 //////////////////////////////////////////////////////////////////////////////*/
 
@@ -23,6 +29,7 @@ const axios = require("axios");
 const cheerio = require("cheerio");
 var pos = require("pos");
 var thesaurus = require("thesaurus");
+const fs = require('fs');
 
 const fetchData = async (siteUrl) => {
   const result = await axios.get(siteUrl);
@@ -49,6 +56,8 @@ var adjectives =
 "semantic" , "deconstructive" , "patriarchial" , "conceptual" , "material" , 
 // implied from acb's art movements
 "social" , "socialist" ];
+
+////////////////////////////////////////////////////////////////////////////////
 
 function rootWordInDictionary(someWord) {
 
@@ -80,7 +89,8 @@ const getIdeologies = async() => {
 
             // Filter out sentences
             // TODO: Needs improvement...could miss some ideologies
-            if(line.indexOf(".") < 0){
+            // TODO: Use POS to find possessive nouns 
+            if(line.indexOf(".") < 0 && line.indexOf("'" < 0)){
                 // get ideology as array of strings
                 var ideologyWords = line.trim().split(" ");
 
@@ -400,12 +410,15 @@ const getArtMovements = async() => {
     // https://en.wikipedia.org/wiki/Philosophical_movement
     // https://en.wikipedia.org/wiki/Category:Philosophical_movements
     // https://en.wikipedia.org/wiki/Category:Marxism
+    // https://en.wikipedia.org/wiki/List_of_Christian_denominations
     // https://en.wikipedia.org/wiki/List_of_new_religious_movements
-    // List of religions
+    //
     // https://en.wikipedia.org/wiki/List_of_architectural_styles
     // TODO: Get list of theorists/philosophers
     // https://en.wikipedia.org/w/index.php?search=List+of+theorists&title=Special%3ASearch&go=Go&ns0=1
     // https://en.wikipedia.org/wiki/List_of_academic_fields
+
+    var insertString = "";
     
     await getArtMovements();
     await getIdeologies();
@@ -433,5 +446,18 @@ const getArtMovements = async() => {
     console.log(adjectives.length);
     console.log(artMovements.length);
     console.log(ideologies.length);
+
+    insertString += "module.exports.artMovements = " + JSON.stringify(artMovements);
+    insertString += ";\n";
+
+    insertString += "module.exports.prefixes = " + JSON.stringify(prefixes);
+    insertString += ";\n";
+
+    insertString += "module.exports.adjectives = " + JSON.stringify(adjectives);
+    insertString += ";\n";
+
+    insertString += "module.exports.ideologies = " + JSON.stringify(ideologies); + ";"
+
+    fs.writeFileSync('data.js', insertString, 'utf-8');
 
 })()
