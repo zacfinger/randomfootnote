@@ -215,9 +215,7 @@ var tweetAt = false;
 // if found we may not, to reduce spamminess.
 var userFound = false;
 
-// Final article title subjects
-var vsubject;
-var vsubject2;
+// Final article title 
 var _randomTitle = "";
 
 // any errors thrown are used in the title
@@ -252,10 +250,16 @@ var data = require("./data");
 // example: postcapitalism, neocapitalism, etc.
 var prefixes = data.prefixes; 
 
+// get data about perfix hyphenization
+var metaPrefix = data.metaPrefix;
+
 // set of base ideologies and movements from 
 // which to create terms such as "semiotic modernism"
 var ideologies = data.ideologies;
 var artMovements = data.artMovements;
+
+// set of combination ideology prefixes, i.e. "marxism-leninism-"
+var combIdeologies = data.combIdeologies;
 
 // array of adjectives
 // selected at random to modify
@@ -330,15 +334,17 @@ var bigAbstThings = ["culture" , "language" , "art" , "reality" , "truth" ,
 // are drawn in the randomTitle() methods
 var adjectivesTwo = [ "capitalist" , randomArrayIndex(adjectivesThree) , 
                       trimE(randomArrayIndex(adjectivesThree)) + "ist", "cultural" , 
-                      "dialectic" , "textual" ];
-var adjectives = [ randomArrayIndex(adjectivesTwo) , 
-                  (randomArrayIndex(prefixes) + 
-                  	randomArrayIndex(adjectivesTwo))];
+                      "dialectic" , "textual" , 
+					  /* added by zacfinger: */ trimIsm(randomArrayIndex(ideologies)) + "ist" ,
+												trimIsm(randomArrayIndex(artMovements)) + "ist" ];
+var adjectives = [ randomArrayIndex(adjectivesTwo) , prefixAndTerm(randomArrayIndex(prefixes), randomArrayIndex(adjectivesTwo)) 
+				/* randomArrayIndex(prefixes) + randomArrayIndex(adjectivesTwo) */ ];
 var abstNounsTwo = [ "sublimation", trimE(randomArrayIndex(adjectivesThree)) + 
                      "ism" , "construction",	"appropriation", "materialism",	
-                     "situationism", /* added by zacfinger: */ randomArrayIndex(ideologies)];
+                     "situationism", 
+					 /* added by zacfinger: */ randomArrayIndex(ideologies), randomArrayIndex(artMovements)];
 var abstNouns = [ randomArrayIndex(abstNounsTwo) , "theory" , "discourse" ,
-                  "narrative" , "de" + randomArrayIndex(abstNounsTwo)];
+                  "narrative" , prefixAndTerm("de", randomArrayIndex(abstNounsTwo))];
 var bigThings = ["society" , "class" , randomArrayIndex(bigAbstThings) , 
                  "sexual identity" ];
 var candidTitles = [ randomArrayIndex(doingSomethingTos) + " " + randomArrayIndex(intellectuals),
@@ -351,13 +357,6 @@ var candidTitles = [ randomArrayIndex(doingSomethingTos) + " " + randomArrayInde
 					randomArrayIndex(doingSomethingToMovements) + " " + randomArrayIndex(artMovements)
 
 ];
-
-var terms = [termAboutIntellectual(randomArrayIndex(intellectuals)),
-			randomArrayIndex(adjectives) + " " + randomArrayIndex(abstNouns),
-			randomArrayIndex(adjectives) + " " + randomArrayIndex(abstNouns), 
-			twoAdjectives() + " theory",
-			"the " + randomArrayIndex(adjectives) + " paradigm of " + randomArrayIndex(bigNebulousThings),
-			randomArrayIndex(adjectives) + " " + randomArrayIndex(ideologies)];
 
 /*//////////////////////////////////////////////////////////////////////////////
 ///
@@ -455,12 +454,33 @@ function randomPlusPlus(){
 	return (parseInt(randomBytes(2).toString('hex'), 16) / (256*256));
 }
 
+// array shuffle function for additional randomness
+// Ref: https://stackoverflow.com/questions/2450954/how-to-randomize-shuffle-a-javascript-array
+function shuffle(array) {
+	var currentIndex = array.length,  randomIndex;
+
+	// While there remain elements to shuffle...
+	while (0 !== currentIndex) {
+
+		// Pick a remaining element...
+		randomIndex = Math.floor(randomPlusPlus() * currentIndex);
+		currentIndex--;
+
+		// And swap it with the current element.
+		[array[currentIndex], array[randomIndex]] = [
+		array[randomIndex], array[currentIndex]];
+	}
+}
+
 // for an array arr returns a random element from arr
 // embedded in a try/catch on the off chance 
 // one of the article titles will have an exception in it
 function randomArrayIndex(arr){
 	
 	try{
+
+		shuffle(arr);
+
 		var rand = randomPlusPlus();
 
 		var index = Math.floor(rand * arr.length);
@@ -479,6 +499,8 @@ function twoAdjectives(){
 	var adj1 = randomArrayIndex(adjectives);
 	var adj2 = adj1;
 
+	// find better way to check if a string contains
+	// any words in another string
 	while(adj2.startsWith(adj1)){
 		adj2 = randomArrayIndex(adjectives);
 	}
@@ -526,11 +548,16 @@ function makeConcept(intellectual){
 	if(concepts.hasOwnProperty(intellectual))
 		return randomArrayIndex(concepts[intellectual]);
 
-	var str = randomArrayIndex(adjectivesThree);
+	var str = randomArrayIndex(adjectivesThree) + " ";
 
-	str += " " + randomArrayIndex(["", randomArrayIndex(prefixes)]);
+	var term = randomArrayIndex([randomArrayIndex(ideologies),randomArrayIndex(artMovements)]);
 
-	str += randomArrayIndex([randomArrayIndex(ideologies),randomArrayIndex(artMovements)]);
+	if(randomPlusPlus() >= 0.5){
+		str += prefixAndTerm(randomArrayIndex(prefixes), term);
+	}
+	else {
+		str += term;
+	}
 
 	return str;
 
@@ -563,6 +590,100 @@ function replaceLastLetterWith(str,oldLastLetter,newLastLetter){
 	return str + newLastLetter;
 }
 
+function randomIsm() {
+
+	var rand = randomPlusPlus();
+
+	var str = "";
+
+	var chances = 3/8;
+
+	if (rand < chances) {
+
+		if(rand <= (chances * chances)){
+			str += randomArrayIndex([randomArrayIndex(artMovements),randomArrayIndex(ideologies)]);
+		}
+		else {
+			str += randomArrayIndex(combIdeologies);
+		}
+		str += "–";
+	}
+
+	return str;
+}
+
+// replace all prefix + term with this function
+// accounts for hyphens more intelligently
+// if using an object with keys doesnt work
+// use if first char of term is vowel/consonant
+function prefixAndTerm(prefix, term) {
+
+	// default value to use hyphens or not
+	var hasHyphen = false;
+
+	if(prefix == "" || prefix == "undefined"){
+		prefix = randomArrayIndex(prefixes);
+	}
+	if(term == "" || term == "undefined"){
+		term = randomArrayIndex([randomArrayIndex(artMovements),randomArrayIndex(ideologies)]);
+	}
+
+	// Allow for combination prefixes for antidisestablishmentarianism
+	// And "antidisestablishmentarianist"
+	recursiveCall = term.toLowerCase().indexOf("establishmentarianis") == 0;
+
+	var c1 = term.toLowerCase().charAt(0);
+
+	str = prefix;
+
+	var sum = 0;
+
+	if(metaPrefix.hasOwnProperty(prefix)){
+
+		var hyphen = metaPrefix[prefix];
+
+		if(hyphen.hasOwnProperty(c1)){
+			
+			sum = hyphen[c1];
+		}
+		else {
+
+			for(const [key, value] of Object.entries(hyphen)){
+				sum += value;
+			}
+
+		}
+	}
+
+	if(sum == 0){
+
+		var c2 = prefix.toLowerCase().slice(-1);
+
+		if((c1 == 'a' || c1 == 'e' || c1 == 'i' || c1 == 'o' || c1 == 'u' || c1 == 'y')
+		&& (c2 == 'a' || c2 == 'e' || c2 == 'i' || c2 == 'o' || c2 == 'u' || c2 == 'y'))
+		{
+			sum = 1;
+		}
+
+		console.log("called edge case for prefixes")
+	}
+
+	hasHyphen = hasHyphen || sum > 0;
+
+	if(hasHyphen) {
+		str += "-" + term;
+	}
+	else {
+		str += term.toLowerCase();
+	}
+
+	if(recursiveCall){
+		str = prefixAndTerm(randomArrayIndex(prefixes), str)
+	}
+
+	return str;
+}
+
 // Generates the random article title from randomTitleTwo()
 // About half of all generated output will prepend a "Candid Title"
 function randomTitle(){
@@ -574,7 +695,7 @@ function randomTitle(){
 		_randomTitle = detectUndefined(capitalizeFirstLetter(randomTitleTwo()));
 	}
 
-	if(randomPlusPlus() >= 0.5){
+	if(randomPlusPlus() > 0.5){
 
 		_randomTitle = detectUndefined(capitalizeFirstLetter(
 		titleCase(randomCandidTitle()) + ": " + capitalizeFirstLetter(_randomTitle)));
@@ -586,55 +707,41 @@ function randomTitle(){
 
 // Randomly generates what will either be the full title of the article
 // Or the subtitle after a candid title is generated in randomTitle()
-// Half of all output is in the format "[vsubject] in the works of [random 
-// artist]" where [vsubject] will 67% of the time be an ideology or art
-// movement, the rest of the time it will be a newly constructed term via
+// 3/7 of all output is in the format "[vsubject] in the works of [random 
+// artist]" where [vsubject] will be a newly constructed term via
 // the newTerm() method such as 'predeconstructivist rationalism'
 function randomTitleTwo(){
 
 	var rand = randomPlusPlus();
 	
-	issueNumber = Math.floor(rand * 10) + 1;
+	issueNumber = Math.floor(rand * 10);
 
-	if(rand >= 1/2){
-		vsubject = newTerm();
-	} else if (rand >= 1/6) {
-		vsubject = randomArrayIndex(artMovements);
-	} else {
-		vsubject = randomArrayIndex(ideologies);
+	var str = "";
+
+	if(rand > 6/7) {
+		str += newTerm() + " in the works of " + randomArrayIndex(citableArtists);
+	}
+	else if(rand > 5/7) {
+		str += newTerm() + " in the works of " + randomArtist();
+	}
+	else if(rand > 4/7) {
+		str += newTerm() + " in the works of " + randomArrayIndex(citableArtists);
+	}
+	else if(rand > 3/7) {
+		str += twoTermTitle(newTerm(), newTerm());
+	}
+	else if(rand > 2/7) {
+		str += twoTermTitle(randomIsm() + randomArrayIndex(ideologies), newTerm());
+	}
+	else if(rand > 1/7) {
+		str += twoTermTitle(randomIsm() + randomArrayIndex(artMovements), newTerm());
+	}
+	else {
+		str += threeTermTitle(randomIsm() + randomArrayIndex(artMovements), randomIsm() + randomArrayIndex(ideologies), newTerm());
 	}
 
-	vsubject2 = vsubject;
+	return str;
 
-	if(rand >= 1/5){
-		while(vsubject2.startsWith(vsubject)) {
-			vsubject2 = newTerm();
-		}
-	} else {
-		while(vsubject2.startsWith(vsubject)) {
-			vsubject2 = randomArrayIndex(ideologies);
-		}
-	}
-
-	var vsubject3 = vsubject2;
-
-	while(vsubject3.startsWith(vsubject2)){
-		vsubject3 = newTerm();
-	}
-	
-	var titlesTwo = [
-		vsubject + " in the works of " + randomArrayIndex(citableArtists), 
-		vsubject + " in the works of " + randomArtist(),
-		vsubject2 + " in the works of " + randomArrayIndex(citableArtists),
-		twoTermTitle(vsubject,vsubject2),
-		twoTermTitle(vsubject,vsubject2),
-		twoTermTitle(vsubject,vsubject2),
-		threeTermTitle(vsubject,vsubject2,vsubject3)
-	];
-
-	return randomArrayIndex(titlesTwo);
-
-	
 }
 
 function twoTermTitle(foo,bar){
@@ -684,11 +791,37 @@ function termAboutIntellectual(intellectual){
 
 function newTerm(){
 
-	return randomArrayIndex(terms);
+	var rand = randomPlusPlus();
+	var str = "";
+
+	if(rand > 5/6) {
+		str += termAboutIntellectual(randomArrayIndex(intellectuals));
+	}
+	else if(rand > 3/6) {
+		str += randomArrayIndex(adjectives) + " " + randomArrayIndex(abstNouns);
+	}
+	else if(rand > 2/6) {
+		str += twoAdjectives() + " theory";
+	}
+	else if(rand > 1/6) {
+		str += "the " + randomArrayIndex(adjectives) + " paradigm of " + randomArrayIndex(bigNebulousThings);
+	}
+	else {
+		str += randomArrayIndex(adjectives) + " " + randomArrayIndex(ideologies);
+	}
+
+	return str;
 }
 
 function capitalizeFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
+function trimIsm(str) {
+	if (str.slice(-3) == "ism"){
+		return str.substring(0, str.length-3);
+	}
+	return str;
 }
 
 // this doesnt really work right now
@@ -698,8 +831,18 @@ function detectUndefined(str){
 	for(var x=0;x<words.length;x++){
 		var temp = words[x];
 
-		if(words[x].toLowerCase() == "undefined")
-			temp = pluralise(randomArrayIndex(prefixes) + "" + randomArrayIndex(ideologies));
+		if(words[x].toLowerCase() == "undefined"){
+			console.log("undefined found");
+			
+			var term = trimIsm(randomArrayIndex([randomArrayIndex(artMovements), randomArrayIndex(ideologies)])) + "ist";
+			
+			if(randomPlusPlus() >= 0.5){
+				temp = prefixAndTerm(randomArrayIndex(prefixes), term);
+			}
+			else {
+				temp = term;
+			}
+		}
 
 		newStr += temp;
 
@@ -808,7 +951,7 @@ function makeGoogleScholarURL(str){
 	return url;
 }
 
-if(process.argv[2]!=null){
+if(process.argv[2]!=null || true){
   // if process.argv[2] is null do not:
   // open sql database
   // write to sqlite database
@@ -819,10 +962,9 @@ if(process.argv[2]!=null){
   // using process.argv[2] == null ensures previous
   // deployments will continue to function
   
-  console.log("\n");
-  console.log(randomTitle());
-  console.log("\n");
-
+  	console.log("\n");
+	console.log(randomTitle());
+  	console.log("\n");
 }
 else 
 {
