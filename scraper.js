@@ -14,6 +14,22 @@
 ///
 /// TODO: Need to modularize and break into functions
 ///
+/// TODO: Get content inside <a> tags
+///
+/// TODO: Prepare HTML nodes before processing i.e., strip out \n etc
+///
+/// // TODO: https://en.wikipedia.org/wiki/List_of_philosophies
+/// // https://en.wikipedia.org/wiki/Philosophical_movement
+/// // https://en.wikipedia.org/wiki/Category:Philosophical_movements
+/// // https://en.wikipedia.org/wiki/Category:Marxism
+/// // https://en.wikipedia.org/wiki/List_of_Christian_denominations
+/// // https://en.wikipedia.org/wiki/List_of_new_religious_movements
+/// // 
+/// // https://en.wikipedia.org/wiki/List_of_architectural_styles
+/// // TODO: Get list of theorists/philosophers
+/// // https://en.wikipedia.org/w/index.php?search=List+of+theorists&title=Special%3ASearch&go=Go&ns0=1
+/// // https://en.wikipedia.org/wiki/List_of_academic_fields
+///
 //////////////////////////////////////////////////////////////////////////////*/
 
 const artMovementUrl = "https://en.wikipedia.org/wiki/List_of_art_movements";
@@ -72,11 +88,11 @@ function inDictionary(someWord) {
 
 }
 
-const getIdeologies = async() => {
+const getIdeologies = async(url) => {
 
     var movementsToRemove = [];
 
-    const $ = await fetchData(ideologyUrl);
+    const $ = await fetchData(url);
 
     $(".mw-parser-output li").each((index, element) => {
 
@@ -126,9 +142,6 @@ const getIdeologies = async() => {
                         && lastWord.toLowerCase() != "one-nationism"
                     ){
                         // split by hyphen if one exists
-                        // TODO: Sometimes hyphen is needed "Post-impressionism" vs "Postmodernism"
-                        // For example "Cubo-Futurism", observe frequency of word using hyphens
-                        // Or whether char after hyphen is vowel vs consonant
                         var index = lastWord.lastIndexOf("-");
 
                         // account for non-standard hyphenization
@@ -212,8 +225,6 @@ const getIdeologies = async() => {
     var ideologyLen = 0;
     var prefixLen = 0;
 
-    console.log(metaPrefix);
-
     // While loop runs until no more prefixes/movements found
     while(ideologyLen != ideologies.length && prefixLen != prefixes.length) {
 
@@ -222,9 +233,6 @@ const getIdeologies = async() => {
 
         // extract prefixes from derivative movements
         // i.e., humanism --> transhumanism yields "trans-"
-        // TODO: Ideologies without a base 
-        // such as "multiculturalism" and "pluriculturalism"
-        // there is no "culturalism" but there is "multi"
         ideologies.forEach(movement => {
 
             ideologies.forEach(otherMovement => {
@@ -364,7 +372,7 @@ const getArtMovements = async() => {
         
         // if last word is an -ism
         // TODO: include words that may have other characters after "ism"
-        // "Neoplasticism"
+        // "Neoplasticism)" is on the page in parentheses
         // TODO: Include movements that should have an "ism"
         // If movements ends in "modern", i.e., "Altermodern"
         if( lastWord.slice(-3) == "ism" ) {
@@ -374,9 +382,6 @@ const getArtMovements = async() => {
             lastWord = lastWord.replace("–", "-");
 
             // split by hyphen if one exists
-            // TODO: Sometimes hyphen is needed "Post-impressionism" vs "Postmodernism"
-            // For example "Cubo-Futurism", observe frequency of word using hyphens
-            // Or whether char after hyphen is vowel vs consonant
             var prefixAndMovement = lastWord.split("-");
 
             // if a hyphenated prefix exists
@@ -418,8 +423,8 @@ const getArtMovements = async() => {
             if(movementWords.length > 1)
             {
                 var word = movementWords.slice(0, movementWords.length - 1).toString().replace(/[,]+/g, " ").trim();
-                // TODO: Adjectives that are also movements or ideologies
-                // For example, "socialist"
+                // TODO: Adjectives that are also movements or ideologies or have prefixes
+                // For example, "socialist realism" or "post-modern feminism"
                 if(!adjectives.includes(word)){
                     adjectives.push(word);
                 }
@@ -445,7 +450,7 @@ const getArtMovements = async() => {
                 // i.e., "postmodernism" ends with "modernism"
                 if(otherMovement != movement 
                     && otherMovement.endsWith(movement)
-                    // TODO: doesn't work for massurrealism vs surrealism
+                    // TODO: find better way to do this
                     && otherMovement.toLowerCase() != "massurrealism" // created prefixes "massur-" and "mas-"
                 ) {
 
@@ -547,37 +552,89 @@ const getArtMovements = async() => {
 
 (async () => {
 
-    // TODO: https://en.wikipedia.org/wiki/List_of_philosophies
-    // https://en.wikipedia.org/wiki/Philosophical_movement
-    // https://en.wikipedia.org/wiki/Category:Philosophical_movements
-    // https://en.wikipedia.org/wiki/Category:Marxism
-    // https://en.wikipedia.org/wiki/List_of_Christian_denominations
-    // https://en.wikipedia.org/wiki/List_of_new_religious_movements
-    //
-    // https://en.wikipedia.org/wiki/List_of_architectural_styles
-    // TODO: Get list of theorists/philosophers
-    // https://en.wikipedia.org/w/index.php?search=List+of+theorists&title=Special%3ASearch&go=Go&ns0=1
-    // https://en.wikipedia.org/wiki/List_of_academic_fields
+    /*//////////////////////////////////////////////////////////////////////////
+    ///
+    /// Data retrieval
+    ///
+    //////////////////////////////////////////////////////////////////////////*/
 
+    // Get the data
     //await getDepartmentTopics();
-
     await getArtMovements();
-    await getIdeologies();
+    await getIdeologies(ideologyUrl);
 
+    // Sort the data
     prefixes.sort();
     adjectives.sort();
+    // ref: https://stackoverflow.com/questions/5467129/sort-javascript-object-by-key
+    metaPrefix = Object.keys(metaPrefix).sort().reduce(
+        (obj, key) => { 
+          obj[key] = metaPrefix[key]; 
+          return obj;
+        }, 
+        {}
+    );
 
-    console.log(ideologies.includes("disestablishmentarianism"));
-    console.log(ideologies.includes("establishmentarianism"));
+    /*//////////////////////////////////////////////////////////////////////////
+    ///
+    /// Check data
+    ///
+    //////////////////////////////////////////////////////////////////////////*/
+
+    console.log(prefixes.length == 60);
+    console.log(adjectives.length == 312);
+    console.log(artMovements.length == 42);
+    console.log(ideologies.length == 445);
+    console.log(combIdeologies.length == 4);
+    console.log(Object.keys(metaPrefix).length == 59); // missing "sub"
+
+    // import test data
+    var testData = require("./data");
+    var testPrefixes = testData.prefixes;
+    var testAdjectives = testData.adjectives;
+    var testArtMovements = testData.artMovements;
+    var testIdeologies = testData.ideologies;
+    var testCombIdeologies = testData.combIdeologies;
+    var testMetaPrefix = testData.metaPrefix;
+
+    testPrefixes.forEach(prefix => {
+        if(!prefixes.includes(prefix)){
+            console.log(prefix);
+        }
+    });
+
+    testAdjectives.forEach(adjective => {
+        if(!adjective.includes(adjective)){
+            console.log(adjective);
+        }
+    });
+
+    testArtMovements.forEach(movement => {
+        if(!artMovements.includes(movement)){
+            console.log(movement);
+        }
+    });
+
+    testIdeologies.forEach(ideology => {
+        if(!ideologies.includes(ideology)){
+            console.log(ideology);
+        }
+    });
+
+    testCombIdeologies.forEach(ideology => {
+        if(!combIdeologies.includes(ideology)){
+            console.log(ideology);
+        }
+    });
     
-    console.log(prefixes);
+    // Ref: https://stackoverflow.com/questions/1068834/object-comparison-in-javascript
+    console.log(JSON.stringify(metaPrefix) === JSON.stringify(testMetaPrefix) );
 
-    console.log(prefixes.length); // 60
-    console.log(adjectives.length); // 311
-    console.log(artMovements.length); // 42
-    console.log(ideologies.length); // 445
-    console.log(combIdeologies.length); // 4
-    console.log(metaPrefix);
+    /*//////////////////////////////////////////////////////////////////////////
+    ///
+    /// Write data to file
+    ///
+    //////////////////////////////////////////////////////////////////////////*/
 
     var insertString = "";
 

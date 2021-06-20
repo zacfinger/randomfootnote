@@ -7,4 +7,5 @@ cron.log
 node_modules
 test.js
 data.js
+testData.js
 .vscode/

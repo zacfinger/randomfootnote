@@ -531,6 +531,10 @@ function trimE (str){
 	else if (str.slice(-3) == "ist"){
 		return str.substring(0, str.length-3);
 	}
+	// handle strings such as "insurrectionary" --> "insurruection"
+	else if (str.slice(-3) == "ary"){
+		return str.substring(0, str.length-3);
+	}
 	return str;
 }
 
@@ -612,6 +616,13 @@ function randomIsm() {
 	return str;
 }
 
+function isVowel(c) {
+
+	c = c.toLowerCase();
+
+	return (c == 'a' || c == 'e' || c == 'i' || c == 'o' || c == 'u' || c == 'y');
+}
+
 // replace all prefix + term with this function
 // accounts for hyphens more intelligently
 // if using an object with keys doesnt work
@@ -630,9 +641,19 @@ function prefixAndTerm(prefix, term) {
 
 	// Allow for combination prefixes for antidisestablishmentarianism
 	// And "antidisestablishmentarianist"
-	recursiveCall = term.toLowerCase().indexOf("establishmentarianis") == 0;
+	if(term.toLowerCase().indexOf("establishmentarianis") == 0){
+
+		if(randomPlusPlus() < 0.5){
+			return randomArrayIndex(prefixes) + "-" + prefix + "-" + term;
+		}
+		else {
+			return prefix + "-" + randomArrayIndex(prefixes) + "-" + term;
+		}
+
+	}
 
 	var c1 = term.toLowerCase().charAt(0);
+	var c2 = prefix.toLowerCase().slice(-1);
 
 	str = prefix;
 
@@ -647,9 +668,18 @@ function prefixAndTerm(prefix, term) {
 			sum = hyphen[c1];
 		}
 		else {
-
 			for(const [key, value] of Object.entries(hyphen)){
-				sum += value;
+
+				if(isVowel(c1) && isVowel(c2)){
+
+					if(isVowel(key)){
+						sum += value;
+					}
+
+				}
+				else {
+					sum += value;
+				}
 			}
 
 		}
@@ -657,12 +687,18 @@ function prefixAndTerm(prefix, term) {
 
 	if(sum == 0){
 
-		var c2 = prefix.toLowerCase().slice(-1);
-
-		if((c1 == 'a' || c1 == 'e' || c1 == 'i' || c1 == 'o' || c1 == 'u' || c1 == 'y')
-		&& (c2 == 'a' || c2 == 'e' || c2 == 'i' || c2 == 'o' || c2 == 'u' || c2 == 'y'))
+		if(isVowel(c1))
 		{
-			sum = 1;
+			if(isVowel(c2))
+			{
+				sum = 1;
+			}
+			
+		}
+		// prefix is something like "left-"
+		else 
+		{
+			sum = -1;
 		}
 
 		console.log("called edge case for prefixes")
@@ -675,10 +711,6 @@ function prefixAndTerm(prefix, term) {
 	}
 	else {
 		str += term.toLowerCase();
-	}
-
-	if(recursiveCall){
-		str = prefixAndTerm(randomArrayIndex(prefixes), str)
 	}
 
 	return str;
@@ -963,6 +995,7 @@ if(process.argv[2]!=null || true){
   // deployments will continue to function
   
   	console.log("\n");
+	//console.log(prefixAndTerm(randomArrayIndex(prefixes), "establishmentarianism"))
 	console.log(randomTitle());
   	console.log("\n");
 }
