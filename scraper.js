@@ -73,22 +73,12 @@ var metaPrefix = {};
 
 ////////////////////////////////////////////////////////////////////////////////
 
-function rootWordInDictionary(someWord) {
-
-    // remove "-ism" from end 
-    var index = someWord.indexOf("ism");
-    var prefix = someWord.substring(0, index);
-    
-    // if word is in dictionary
-    return inDictionary(prefix);
-}
-
 function inDictionary(someWord) {
     return thesaurus.find(someWord).length > 0;
 
 }
 
-const getIdeologies = async(url) => {
+const getIdeologies = async(url, arr) => {
 
     var movementsToRemove = [];
 
@@ -103,6 +93,7 @@ const getIdeologies = async(url) => {
 
             // Filter out sentences, possessive and section headings
             // TODO: Needs improvement...could miss some ideologies
+            // Have to have special cases to account for weird formatting...
             // TODO: Use POS to find possessive nouns 
             if(line.indexOf(".") < 0 && line.indexOf("'") < 0 
                 && line.indexOf(":") < 0 && /\d/.test(line) == false
@@ -116,8 +107,14 @@ const getIdeologies = async(url) => {
                 // get last word in array
                 // TODO: Account for proper nouns, i.e. "Marxism"
                 // // Use "list of ideologies named after people"
+                // Possible solution: https://stackoverflow.com/questions/48145432/javascript-includes-case-insensitive/48145521
                 var lastWord = ideologyWords[ideologyWords.length - 1].toLowerCase();
 
+                // if last word is an -ism
+                // TODO: include words that may have other characters after "ism"
+                // "Neoplasticism)" is on the page in parentheses
+                // TODO: Include movements that should have an "ism"
+                // If movements ends in "modern", i.e., "Altermodern"
                 if (lastWord.slice(-3) == "ism"){
 
                     // check for two word ideologies, i.e. "De Leonism"
@@ -135,7 +132,7 @@ const getIdeologies = async(url) => {
                         }
                     }
 
-                    // account for ideology "saint-simonianism"
+                    // account for hyphentaed ideologies, i.e. "saint-simonianism"
                     // TODO: what will happen if ideology == "post-saint-simonianism"
                     if(lastWord.toLowerCase() != "saint-simonianism" 
                         && lastWord.toLowerCase() != "third-worldism" 
@@ -154,6 +151,7 @@ const getIdeologies = async(url) => {
                             var prefix = lastWord.substring(0, index);
                             lastWord = lastWord.substring(index + 1);
 
+                            // Capture combination ideologies, i.e. "Marxism-Leninism"
                             if(prefix.slice(-3) == "ism") {
                                 if(!combIdeologies.includes(prefix)){
                                     combIdeologies.push(prefix);
@@ -164,6 +162,7 @@ const getIdeologies = async(url) => {
                                     prefixes.push(prefix);
                                 }
 
+                                // Capture hyphenation information 
                                 if(!movementsToRemove.includes(ideologyWords[ideologyWords.length - 1].toLowerCase()))
                                 {
 
@@ -186,8 +185,8 @@ const getIdeologies = async(url) => {
                     }
 
                     // add movement to list
-                    if(!ideologies.includes(lastWord)) {
-                        ideologies.push(lastWord);
+                    if(!arr.includes(lastWord)) {
+                        arr.push(lastWord);
                     }
 
                     // To preserve words like "social democratic ___ism"
@@ -209,7 +208,8 @@ const getIdeologies = async(url) => {
                         }
 
                         var word = ideologyWords.slice(index + 1, ideologyWords.length - 1).toString().replace(/[,]+/g, " ").trim();
-                        
+                        // TODO: Adjectives that are also movements or ideologies or have prefixes
+                        // For example, "socialist realism" or "post-modern feminism"
                         if(!adjectives.includes(word) && word != "" && word != "class struggleunder"){
                             adjectives.push(word);
                         }
@@ -219,25 +219,26 @@ const getIdeologies = async(url) => {
         });
     });
 
-    ideologies.sort();
+    arr.sort();
     prefixes.sort();
 
     var ideologyLen = 0;
     var prefixLen = 0;
 
     // While loop runs until no more prefixes/movements found
-    while(ideologyLen != ideologies.length && prefixLen != prefixes.length) {
+    while(ideologyLen != arr.length && prefixLen != prefixes.length) {
 
-        ideologyLen = ideologies.length;
+        ideologyLen = arr.length;
         prefixLen = prefixes.length;
 
         // extract prefixes from derivative movements
         // i.e., humanism --> transhumanism yields "trans-"
-        ideologies.forEach(movement => {
+        arr.forEach(movement => {
 
-            ideologies.forEach(otherMovement => {
+            arr.forEach(otherMovement => {
+
                 // if this is a derivative of another movement
-                // i.e., "transhumanism" ends with "humanism"
+                // i.e., "postmodernism" ends with "modernism"
                 if(otherMovement != movement
                     && otherMovement.endsWith(movement)
                     // TODO: this isn't really the best way to do this
@@ -249,7 +250,10 @@ const getIdeologies = async(url) => {
                     && otherMovement.toLowerCase() != "intactivism"     // created prefix "int-"
                     && otherMovement.toLowerCase() != "confederalism"   // created prefix "con-"
                     && otherMovement.toLowerCase() != "eliminationism"  // created prefix "elimi"
+                    && otherMovement.toLowerCase() != "massurrealism"   // created prefixes "massur-" and "mas-"
+                    && otherMovement.toLowerCase() != "surrealism"      // created prefix "sur-"
                 ){
+
                     // extract prefix
                     index = otherMovement.indexOf(movement);
                     prefix = otherMovement.substring(0, index);
@@ -276,32 +280,42 @@ const getIdeologies = async(url) => {
 
                     // track movements to remove
                     if(!movementsToRemove.includes(otherMovement)){
+                        
                         movementsToRemove.push(otherMovement);
                     }
                 }
             })
         });
 
-        console.log(movementsToRemove);
+        movementsToRemove.forEach(movement => {
+            console.log(movement);
+        });
 
         // remove movements whose prefix and root are saved
-        ideologies = ideologies.filter(e => !movementsToRemove.includes(e));
+        arr = arr.filter(e => !movementsToRemove.includes(e));
 
         movementsToRemove = [];
 
         // extract prefixes which did not have prefix with hyphen
         // iterate through each movement
-        ideologies.forEach(movement => { 
+        arr.forEach(movement => { 
 
             // if movement starts with one of the found prefixes
             prefixes.forEach(prefix => {
+
                 if(movement.startsWith(prefix)){
                     // find string after prefix
                     var rootMovement = movement.substring(prefix.length);
 
-                    // TODO: should find a better way for these edge cases
-                    // TODO: Scrape wikipedia for the title and see if 404
+                    // only extract prefix and movement
+                    // if prefix + movement without "ism" is a word in dictionary
+                    // this allows for "realism" vs "surrealism"
+                    // by checking if root "sur" in dictionary
+                    // will fail if root is "surreal"
                     if(inDictionary(rootMovement) 
+                        // TODO: must be a better way to do this
+                        // TODO: should find a better way for these edge cases
+                        // TODO: Scrape wikipedia for the title and see if 404
                         && rootMovement.toLowerCase() != "ism"
                         && rootMovement.toLowerCase() != "sm"
                         || rootMovement.toLowerCase() == "nomism"
@@ -309,8 +323,9 @@ const getIdeologies = async(url) => {
                         || rootMovement.toLowerCase() == "gaianism"
                         || rootMovement.toLowerCase() == "culturalism"
                     ){
-                        if(!ideologies.includes(rootMovement)){
-                            ideologies.push(rootMovement);
+    
+                        if(!arr.includes(rootMovement)){
+                            arr.push(rootMovement);
                         }
 
                         // otherMovement = "ecoauthoritarianism"
@@ -342,213 +357,20 @@ const getIdeologies = async(url) => {
             });
         });
 
-        console.log(movementsToRemove);
+        movementsToRemove.forEach(movement => {
+            console.log(movement);
+        });
 
         // remove movements whose prefix and root are saved
-        ideologies = ideologies.filter(e => !movementsToRemove.includes(e));
+        arr = arr.filter(e => !movementsToRemove.includes(e));
 
         movementsToRemove = [];
-    }
-    
-    ideologies.sort();
 
+        arr.sort();
+    }
+
+    return arr;
 }
-
-const getArtMovements = async() => {
-
-    var movementsToRemove = [];
-
-    const $ = await fetchData(artMovementUrl);
-        
-    $(".mw-parser-output > ul > li").each((index, element) => {
-
-        // get Art Movement as array of strings
-        var movementWords = $(element).text().trim().split(" ");
-        
-        // get last word in array
-        // TODO: Account for proper nouns, i.e. "Pre-Raphaelitism"
-        // Possible solution: https://stackoverflow.com/questions/48145432/javascript-includes-case-insensitive/48145521
-        var lastWord = movementWords[movementWords.length - 1].toLowerCase();
-        
-        // if last word is an -ism
-        // TODO: include words that may have other characters after "ism"
-        // "Neoplasticism)" is on the page in parentheses
-        // TODO: Include movements that should have an "ism"
-        // If movements ends in "modern", i.e., "Altermodern"
-        if( lastWord.slice(-3) == "ism" ) {
-
-            // catch non-standard hyphenization
-            // TODO: replace with regex
-            lastWord = lastWord.replace("–", "-");
-
-            // split by hyphen if one exists
-            var prefixAndMovement = lastWord.split("-");
-
-            // if a hyphenated prefix exists
-            if (prefixAndMovement.length > 1) {
-
-                // add to array of prefixes
-                var prefix = prefixAndMovement[0];
-                lastWord = prefixAndMovement[1];
-
-                if(!prefixes.includes(prefix)) {
-                    prefixes.push(prefix);
-                }
-
-                if(!movementsToRemove.includes(movementWords[movementWords.length - 1].toLowerCase()))
-                {
-                    var c = lastWord.charAt(0);
-
-                    if(!metaPrefix.hasOwnProperty(prefix)){
-                        metaPrefix[prefix] = {};
-                    }
-                    if(!metaPrefix[prefix].hasOwnProperty(c)){
-                        metaPrefix[prefix][c] = 1;
-                    }
-                    else if(metaPrefix[prefix].hasOwnProperty(c)){
-                        metaPrefix[prefix][c] += 1;
-                    }
-
-                    movementsToRemove.push(movementWords[movementWords.length - 1].toLowerCase());
-                }
-            }
-
-            // add movement to list
-            if(!artMovements.includes(lastWord)) {
-                artMovements.push(lastWord);
-            }
-
-            // To preserve words like "social democratic ___ism"
-            // Every single word in front of the final word is considered a single adjective
-            if(movementWords.length > 1)
-            {
-                var word = movementWords.slice(0, movementWords.length - 1).toString().replace(/[,]+/g, " ").trim();
-                // TODO: Adjectives that are also movements or ideologies or have prefixes
-                // For example, "socialist realism" or "post-modern feminism"
-                if(!adjectives.includes(word)){
-                    adjectives.push(word);
-                }
-            }
-        }
-    });
-
-    var movementLen = 0;
-    var prefixLen = 0;
-
-    // While loop runs until no more prefixes/movements found
-    while(movementLen != artMovements.length && prefixLen != prefixes.length){
-        
-        movementLen = artMovements.length;
-        prefixLen = prefixes.length;
-
-        // extract prefixes from derivative movements
-        // i.e., modernism --> postmodernism yields "post-"
-        artMovements.forEach(movement => {
-
-            artMovements.forEach(otherMovement => {
-                // if this is a derivative of another movement
-                // i.e., "postmodernism" ends with "modernism"
-                if(otherMovement != movement 
-                    && otherMovement.endsWith(movement)
-                    // TODO: find better way to do this
-                    && otherMovement.toLowerCase() != "massurrealism" // created prefixes "massur-" and "mas-"
-                ) {
-
-                    // only extract prefix and movement
-                    // if prefix + movement without "ism" is a word in dictionary
-                    // this allows for "realism" vs "surrealism"
-                    // by checking if root "sur" in dictionary
-                    // will fail if root is "surreal"
-                    // TODO: must be a better way to do this
-                    if(!rootWordInDictionary(otherMovement)) {
-
-                        // extract prefix
-                        index = otherMovement.indexOf(movement);
-                        prefix = otherMovement.substring(0, index);
-                        
-                        // add prefix to array
-                        if(!prefixes.includes(prefix)){
-                            prefixes.push(prefix);
-                        }
-
-                        if(!movementsToRemove.includes(otherMovement)){
-                            var c = movement.charAt(0);
-        
-                            if(!metaPrefix.hasOwnProperty(prefix)){
-                                metaPrefix[prefix] = {};
-                            }
-                            if(!metaPrefix[prefix].hasOwnProperty(c)){
-                                metaPrefix[prefix][c] = -1;
-                            }
-                            else if(metaPrefix[prefix].hasOwnProperty(c)){
-    
-                                metaPrefix[prefix][c] -= 1;
-                            }
-                        }
-
-                        // track movements to remove
-                        if(!movementsToRemove.includes(otherMovement)){
-                            
-                            movementsToRemove.push(otherMovement);
-                        }
-                    }
-                }
-            });
-        });
-
-        // extract prefixes which did not have prefix with hyphen
-        // iterate through each movement
-        artMovements.forEach(movement => { 
-
-            // if movement starts with one of the found prefixes
-            prefixes.forEach(prefix => {
-                if(movement.startsWith(prefix)
-                    && movement.toLowerCase() != "neoism" // creates movement "-ism"
-                ){
-                    // find string after prefix
-                    var rootMovement = movement.substring(prefix.length);
-
-                    if(inDictionary(rootMovement)){
-
-                        if(!artMovements.includes(rootMovement)){
-                            artMovements.push(rootMovement);
-                        }
-
-                        if(!movementsToRemove.includes(movement))
-                        {
-                            var c = rootMovement.charAt(0);
-
-                            if(!metaPrefix.hasOwnProperty(prefix)){
-                                metaPrefix[prefix] = {};
-                            }
-                            if(!metaPrefix[prefix].hasOwnProperty(c)){
-                                metaPrefix[prefix][c] = -1;
-                            }
-                            else if(metaPrefix[prefix].hasOwnProperty(c)){
-                                metaPrefix[prefix][c] -= 1;
-                            }
-
-                        }
-
-                        // track movements to remove
-                        if(!movementsToRemove.includes(movement)){
-                                
-                            movementsToRemove.push(movement);
-                        }
-                    }
-                }
-            })
-        });
-    }
-
-    console.log(movementsToRemove);
-
-    // remove movements whose prefix and root are saved
-    artMovements = artMovements.filter(e => !movementsToRemove.includes(e));
-    
-    artMovements.sort();
-    
-};
 
 (async () => {
 
@@ -560,8 +382,9 @@ const getArtMovements = async() => {
 
     // Get the data
     //await getDepartmentTopics();
-    await getArtMovements();
-    await getIdeologies(ideologyUrl);
+    //await getArtMovements();
+    artMovements = await getIdeologies(artMovementUrl, artMovements);
+    ideologies = await getIdeologies(ideologyUrl, ideologies);
 
     // Sort the data
     prefixes.sort();
@@ -581,15 +404,8 @@ const getArtMovements = async() => {
     ///
     //////////////////////////////////////////////////////////////////////////*/
 
-    console.log(prefixes.length == 60);
-    console.log(adjectives.length == 312);
-    console.log(artMovements.length == 42);
-    console.log(ideologies.length == 445);
-    console.log(combIdeologies.length == 4);
-    console.log(Object.keys(metaPrefix).length == 59); // missing "sub"
-
     // import test data
-    var testData = require("./data");
+    var testData = require("./testData");
     var testPrefixes = testData.prefixes;
     var testAdjectives = testData.adjectives;
     var testArtMovements = testData.artMovements;
@@ -597,38 +413,101 @@ const getArtMovements = async() => {
     var testCombIdeologies = testData.combIdeologies;
     var testMetaPrefix = testData.metaPrefix;
 
+    var writeFile = true;
+    
+    console.log("==========================\nMissing prefixes:")
+
     testPrefixes.forEach(prefix => {
         if(!prefixes.includes(prefix)){
+            writeFile = false;
             console.log(prefix);
         }
     });
 
+    console.log("Missing adjectives:")
+
     testAdjectives.forEach(adjective => {
         if(!adjective.includes(adjective)){
+            writeFile = false;
             console.log(adjective);
         }
     });
 
+    console.log("Missing art movements:")
+
     testArtMovements.forEach(movement => {
         if(!artMovements.includes(movement)){
+            writeFile = false;
             console.log(movement);
         }
     });
 
+    console.log("Missing ideologies:")
+
     testIdeologies.forEach(ideology => {
         if(!ideologies.includes(ideology)){
+            writeFile = false;
             console.log(ideology);
         }
     });
 
+    console.log("Missing combIdeologies:")
+
     testCombIdeologies.forEach(ideology => {
         if(!combIdeologies.includes(ideology)){
+            writeFile = false;
             console.log(ideology);
         }
     });
-    
-    // Ref: https://stackoverflow.com/questions/1068834/object-comparison-in-javascript
-    console.log(JSON.stringify(metaPrefix) === JSON.stringify(testMetaPrefix) );
+
+    console.log("Missing keys in metaPrefix:")
+
+    for(const [key, value] of Object.entries(testMetaPrefix)){
+        if(!metaPrefix.hasOwnProperty(key)){
+            writeFile = false;
+            console.log(key);
+        }
+    }
+
+    console.log("==========================\nAdded prefixes:")
+
+    prefixes.forEach(prefix => {
+        if(!testPrefixes.includes(prefix)){
+            console.log(prefix);
+        }
+    });
+
+    console.log("Added adjectives:")
+
+    adjectives.forEach(adjective => {
+        if(!testAdjectives.includes(adjective)){
+            console.log(adjective);
+        }
+    });
+
+    console.log("Added art movements:")
+
+    artMovements.forEach(movement => {
+        if(!testArtMovements.includes(movement)){
+            console.log(movement);
+        }
+    });
+
+    console.log("Added ideologies:")
+
+    ideologies.forEach(ideology => {
+        if(!testIdeologies.includes(ideology)){
+            console.log(ideology);
+        }
+    });
+
+    console.log("Added combIdeologies:")
+
+    combIdeologies.forEach(ideology => {
+        if(!testCombIdeologies.includes(ideology)){
+            console.log(ideology);
+        }
+    });
 
     /*//////////////////////////////////////////////////////////////////////////
     ///
@@ -656,6 +535,9 @@ const getArtMovements = async() => {
     insertString += "module.exports.metaPrefix = " + JSON.stringify(metaPrefix);
     insertString += ";";
 
-    fs.writeFileSync('data.js', insertString, 'utf-8');
+    if(writeFile)
+    {
+        fs.writeFileSync('data.js', insertString, 'utf-8');
+    }
     
 })()
