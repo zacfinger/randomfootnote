@@ -1,6 +1,10 @@
 /*//////////////////////////////////////////////////////////////////////////////
 ///
 /// TO DO:
+///
+/// TODO: Determine why prefix hyphenization data differs
+///
+/// TODO: Extract prefix "non" from art movement "nonconformism" 
 /// 
 /// TODO: Maintain each string in array as lower-case. Determine if 
 /// capitalization is necessary by maintaining count of times term is 
@@ -78,6 +82,59 @@ function inDictionary(someWord) {
 
 }
 
+function containsCaseInsensitive(arr, term) {
+
+    var contains = false;
+
+    arr.forEach(element => {
+        if(term.toLowerCase() == element.toLowerCase()){
+            contains = true;
+        }
+    });
+
+    return contains;
+}
+
+function pushLowerCase(arr, term) {
+
+    var index = -1;
+
+    // if term not already present
+    if(!arr.includes(term)){
+
+        var termFound = false;
+
+        // assume array contains a differently-cased version of term
+        arr.forEach(element => {
+
+            // if a differently-cased version of term is found
+            if(term.toLowerCase() == element.toLowerCase()){
+
+                termFound = true;
+
+                // if element is not already lower case
+                if(element.toLowerCase() != element){
+
+                    // we will prefer lowercase
+                    if(term.toLowerCase() == term){
+
+                        // replace the term
+                        var i = arr.indexOf(element);
+                        arr[i] = term;
+                    }
+                }
+            }
+        });
+        
+        // add term if not yet encountered
+        if(!termFound) {
+            arr.push(term);
+        }
+    }
+
+    return arr;
+}
+
 const getIdeologies = async(url, arr) => {
 
     var movementsToRemove = [];
@@ -108,14 +165,14 @@ const getIdeologies = async(url, arr) => {
                 // TODO: Account for proper nouns, i.e. "Marxism"
                 // // Use "list of ideologies named after people"
                 // Possible solution: https://stackoverflow.com/questions/48145432/javascript-includes-case-insensitive/48145521
-                var lastWord = ideologyWords[ideologyWords.length - 1].toLowerCase();
+                var lastWord = ideologyWords[ideologyWords.length - 1];
 
                 // if last word is an -ism
                 // TODO: include words that may have other characters after "ism"
                 // "Neoplasticism)" is on the page in parentheses
                 // TODO: Include movements that should have an "ism"
                 // If movements ends in "modern", i.e., "Altermodern"
-                if (lastWord.slice(-3) == "ism"){
+                if (lastWord.toLowerCase().slice(-3) == "ism"){
 
                     // check for two word ideologies, i.e. "De Leonism"
                     if(ideologyWords.length > 1){
@@ -124,7 +181,7 @@ const getIdeologies = async(url, arr) => {
                          || (lastWord.toLowerCase() == "worldism" && ideologyWords[ideologyWords.length - 2].toLowerCase().endsWith("third"))
                          || (lastWord.toLowerCase() == "positionism" && ideologyWords[ideologyWords.length - 2].toLowerCase().endsWith("third"))
                         ){
-                            ideologyWords[ideologyWords.length - 2] = ideologyWords[ideologyWords.length - 2].toLowerCase() + " " + lastWord.toLowerCase();
+                            ideologyWords[ideologyWords.length - 2] = ideologyWords[ideologyWords.length - 2] + " " + lastWord;
 
                             lastWord = ideologyWords[ideologyWords.length - 2];
 
@@ -152,13 +209,15 @@ const getIdeologies = async(url, arr) => {
                             lastWord = lastWord.substring(index + 1);
 
                             // Capture combination ideologies, i.e. "Marxism-Leninism"
-                            if(prefix.slice(-3) == "ism") {
+                            if(prefix.toLowerCase().slice(-3) == "ism") {
                                 if(!combIdeologies.includes(prefix)){
                                     combIdeologies.push(prefix);
                                 } 
                             } else {
-                                if(!prefixes.includes(prefix)) {
-                                    // add to array of prefixes
+                                if(containsCaseInsensitive(prefixes, prefix)) {
+                                    prefixes = pushLowerCase(prefixes, prefix);
+                                }
+                                else {
                                     prefixes.push(prefix);
                                 }
 
@@ -166,16 +225,16 @@ const getIdeologies = async(url, arr) => {
                                 if(!movementsToRemove.includes(ideologyWords[ideologyWords.length - 1].toLowerCase()))
                                 {
 
-                                    var c = lastWord.charAt(0);
+                                    var c = lastWord.toLowerCase().charAt(0);
 
-                                    if(!metaPrefix.hasOwnProperty(prefix)){
-                                        metaPrefix[prefix] = {};
+                                    if(!metaPrefix.hasOwnProperty(prefix.toLowerCase())){
+                                        metaPrefix[prefix.toLowerCase()] = {};
                                     }
-                                    if(!metaPrefix[prefix].hasOwnProperty(c)){
-                                        metaPrefix[prefix][c] = 1;
+                                    if(!metaPrefix[prefix.toLowerCase()].hasOwnProperty(c)){
+                                        metaPrefix[prefix.toLowerCase()][c] = 1;
                                     }
-                                    else if(metaPrefix[prefix].hasOwnProperty(c)){
-                                        metaPrefix[prefix][c] += 1;
+                                    else if(metaPrefix[prefix.toLowerCase()].hasOwnProperty(c)){
+                                        metaPrefix[prefix.toLowerCase()][c] += 1;
                                     }
 
                                     movementsToRemove.push(ideologyWords[ideologyWords.length - 1].toLowerCase());
@@ -185,7 +244,10 @@ const getIdeologies = async(url, arr) => {
                     }
 
                     // add movement to list
-                    if(!arr.includes(lastWord)) {
+                    if(containsCaseInsensitive(arr, lastWord)) {
+                        arr = pushLowerCase(arr, lastWord);
+                    }
+                    else {
                         arr.push(lastWord);
                     }
 
@@ -239,8 +301,8 @@ const getIdeologies = async(url, arr) => {
 
                 // if this is a derivative of another movement
                 // i.e., "postmodernism" ends with "modernism"
-                if(otherMovement != movement
-                    && otherMovement.endsWith(movement)
+                if(otherMovement.toLowerCase() != movement.toLowerCase()
+                    && otherMovement.toLowerCase().endsWith(movement.toLowerCase())
                     // TODO: this isn't really the best way to do this
                     && movement.toLowerCase() != "anationalism"         // created prefix "ultr-"
                     && otherMovement.toLowerCase() != "veganarchism"    // created prefix "veg-"
@@ -255,33 +317,39 @@ const getIdeologies = async(url, arr) => {
                 ){
 
                     // extract prefix
-                    index = otherMovement.indexOf(movement);
+                    index = otherMovement.toLowerCase().indexOf(movement.toLowerCase());
                     prefix = otherMovement.substring(0, index);
 
                     // add prefix to array
-                    if(!prefixes.includes(prefix) && prefix != "antidis"){
-                        prefixes.push(prefix);
+                    if(prefix.toLowerCase() != "antidis"){
+                        
+                        if(containsCaseInsensitive(prefixes, prefix)) {
+                            prefixes = pushLowerCase(prefixes, prefix);
+                        }
+                        else {
+                            prefixes.push(prefix);
+                        }
                     }
 
-                    if(!movementsToRemove.includes(otherMovement) && prefix != "antidis"){
-                        var c = movement.charAt(0);
+                    if(!movementsToRemove.includes(otherMovement.toLowerCase()) && prefix.toLowerCase() != "antidis"){
+                        var c = movement.toLowerCase().charAt(0);
     
-                        if(!metaPrefix.hasOwnProperty(prefix)){
-                            metaPrefix[prefix] = {};
+                        if(!metaPrefix.hasOwnProperty(prefix.toLowerCase())){
+                            metaPrefix[prefix.toLowerCase()] = {};
                         }
-                        if(!metaPrefix[prefix].hasOwnProperty(c)){
-                            metaPrefix[prefix][c] = -1;
+                        if(!metaPrefix[prefix.toLowerCase()].hasOwnProperty(c)){
+                            metaPrefix[prefix.toLowerCase()][c] = -1;
                         }
-                        else if(metaPrefix[prefix].hasOwnProperty(c)){
+                        else if(metaPrefix[prefix.toLowerCase()].hasOwnProperty(c)){
 
-                            metaPrefix[prefix][c] -= 1;
+                            metaPrefix[prefix.toLowerCase()][c] -= 1;
                         }
                     }
 
                     // track movements to remove
-                    if(!movementsToRemove.includes(otherMovement)){
+                    if(!movementsToRemove.includes(otherMovement.toLowerCase())){
                         
-                        movementsToRemove.push(otherMovement);
+                        movementsToRemove.push(otherMovement.toLowerCase());
                     }
                 }
             })
@@ -292,7 +360,7 @@ const getIdeologies = async(url, arr) => {
         });
 
         // remove movements whose prefix and root are saved
-        arr = arr.filter(e => !movementsToRemove.includes(e));
+        arr = arr.filter(e => !movementsToRemove.includes(e.toLowerCase()));
 
         movementsToRemove = [];
 
@@ -303,7 +371,7 @@ const getIdeologies = async(url, arr) => {
             // if movement starts with one of the found prefixes
             prefixes.forEach(prefix => {
 
-                if(movement.startsWith(prefix)){
+                if(movement.toLowerCase().startsWith(prefix.toLowerCase())){
                     // find string after prefix
                     var rootMovement = movement.substring(prefix.length);
 
@@ -324,33 +392,37 @@ const getIdeologies = async(url, arr) => {
                         || rootMovement.toLowerCase() == "culturalism"
                     ){
     
-                        if(!arr.includes(rootMovement)){
+                        // add movement to list
+                        if(containsCaseInsensitive(arr, rootMovement)) {
+                            arr = pushLowerCase(arr, rootMovement);
+                        }
+                        else {
                             arr.push(rootMovement);
                         }
 
                         // otherMovement = "ecoauthoritarianism"
                         // movement = "authoritarianism"
-                        if(!movementsToRemove.includes(movement))
+                        if(!movementsToRemove.includes(movement.toLowerCase()))
                         {
-                            var c = rootMovement.charAt(0);
+                            var c = rootMovement.toLowerCase().charAt(0);
 
-                            if(!metaPrefix.hasOwnProperty(prefix)){
-                                metaPrefix[prefix] = {};
+                            if(!metaPrefix.hasOwnProperty(prefix.toLowerCase())){
+                                metaPrefix[prefix.toLowerCase()] = {};
                             }
-                            if(!metaPrefix[prefix].hasOwnProperty(c)){
-                                metaPrefix[prefix][c] = -1;
+                            if(!metaPrefix[prefix.toLowerCase()].hasOwnProperty(c)){
+                                metaPrefix[prefix.toLowerCase()][c] = -1;
                             }
-                            else if(metaPrefix[prefix].hasOwnProperty(c)){
-                                metaPrefix[prefix][c] -= 1;
+                            else if(metaPrefix[prefix.toLowerCase()].hasOwnProperty(c)){
+                                metaPrefix[prefix.toLowerCase()][c] -= 1;
                             }
 
                         }
 
                         // track movements to remove
-                        if(!movementsToRemove.includes(movement))
+                        if(!movementsToRemove.includes(movement.toLowerCase()))
                         {
 
-                            movementsToRemove.push(movement);
+                            movementsToRemove.push(movement.toLowerCase());
                         }
                     }
                 }
@@ -362,7 +434,7 @@ const getIdeologies = async(url, arr) => {
         });
 
         // remove movements whose prefix and root are saved
-        arr = arr.filter(e => !movementsToRemove.includes(e));
+        arr = arr.filter(e => !movementsToRemove.includes(e.toLowerCase()));
 
         movementsToRemove = [];
 
@@ -413,66 +485,80 @@ const getIdeologies = async(url, arr) => {
     var testCombIdeologies = testData.combIdeologies;
     var testMetaPrefix = testData.metaPrefix;
 
+    console.log(prefixes.length - testPrefixes.length);
+    console.log(adjectives.length - testAdjectives.length);
+    console.log(artMovements.length - testArtMovements.length);
+    console.log(ideologies.length - testIdeologies.length);
+    console.log(combIdeologies.length - testCombIdeologies.length);
+    console.log(JSON.stringify(metaPrefix).toLowerCase() === JSON.stringify(testMetaPrefix).toLowerCase());
+
     var writeFile = true;
     
-    console.log("==========================\nMissing prefixes:")
+    console.log("==========================\nMissing prefixes:");
 
-    testPrefixes.forEach(prefix => {
-        if(!prefixes.includes(prefix)){
+    testPrefixes.forEach(testPrefix => {
+        if(!containsCaseInsensitive(prefixes, testPrefix)){
             writeFile = false;
-            console.log(prefix);
+            console.log(testPrefix);
         }
     });
 
     console.log("Missing adjectives:")
 
-    testAdjectives.forEach(adjective => {
-        if(!adjective.includes(adjective)){
+    testAdjectives.forEach(testAdjective => {
+        if(!containsCaseInsensitive(adjectives, testAdjective)){
             writeFile = false;
-            console.log(adjective);
+            console.log(testAdjective);
         }
     });
 
     console.log("Missing art movements:")
 
-    testArtMovements.forEach(movement => {
-        if(!artMovements.includes(movement)){
+    testArtMovements.forEach(testArtMovement => {
+        if(!containsCaseInsensitive(artMovements, testArtMovement)){
             writeFile = false;
-            console.log(movement);
+            console.log(testArtMovement);
         }
     });
 
     console.log("Missing ideologies:")
 
-    testIdeologies.forEach(ideology => {
-        if(!ideologies.includes(ideology)){
+    testIdeologies.forEach(testIdeology => {
+        if(!containsCaseInsensitive(ideologies, testIdeology)){
             writeFile = false;
-            console.log(ideology);
+            console.log(testIdeology);
         }
     });
 
     console.log("Missing combIdeologies:")
 
-    testCombIdeologies.forEach(ideology => {
-        if(!combIdeologies.includes(ideology)){
+    testCombIdeologies.forEach(testCombIdeology => {
+        if(!containsCaseInsensitive(combIdeologies, testCombIdeology)){
             writeFile = false;
-            console.log(ideology);
+            console.log(testCombIdeology);
         }
     });
 
-    console.log("Missing keys in metaPrefix:")
+    console.log("Differing keys in metaPrefix:")
 
     for(const [key, value] of Object.entries(testMetaPrefix)){
-        if(!metaPrefix.hasOwnProperty(key)){
+        if(!metaPrefix.hasOwnProperty(key.toLowerCase())){
             writeFile = false;
             console.log(key);
+        } else {
+            if(JSON.stringify(testMetaPrefix[key]) !== JSON.stringify(metaPrefix[key])){
+                writeFile = false;
+                console.log(key + ":")
+                console.log(testMetaPrefix[key])
+            }
         }
     }
 
     console.log("==========================\nAdded prefixes:")
 
     prefixes.forEach(prefix => {
-        if(!testPrefixes.includes(prefix)){
+        if(!containsCaseInsensitive(testPrefixes, prefix)){
+            writeFile = false;
             console.log(prefix);
         }
     });
@@ -480,34 +566,53 @@ const getIdeologies = async(url, arr) => {
     console.log("Added adjectives:")
 
     adjectives.forEach(adjective => {
-        if(!testAdjectives.includes(adjective)){
+        if(!containsCaseInsensitive(testAdjectives, adjective)){
+            writeFile = false;
             console.log(adjective);
         }
     });
 
     console.log("Added art movements:")
 
-    artMovements.forEach(movement => {
-        if(!testArtMovements.includes(movement)){
-            console.log(movement);
+    artMovements.forEach(artMovement => {
+        if(!containsCaseInsensitive(testArtMovements, artMovement)){
+            writeFile = false;
+            console.log(artMovement);
         }
     });
 
     console.log("Added ideologies:")
 
     ideologies.forEach(ideology => {
-        if(!testIdeologies.includes(ideology)){
+        if(!containsCaseInsensitive(testIdeologies, ideology)){
+            writeFile = false;
             console.log(ideology);
         }
     });
 
     console.log("Added combIdeologies:")
 
-    combIdeologies.forEach(ideology => {
-        if(!testCombIdeologies.includes(ideology)){
-            console.log(ideology);
+    combIdeologies.forEach(combIdeology => {
+        if(!containsCaseInsensitive(testCombIdeologies, combIdeology)){
+            writeFile = false;
+            console.log(combIdeology);
         }
     });
+
+    console.log("Added keys in metaPrefix:")
+
+    for(const [key, value] of Object.entries(metaPrefix)){
+        if(!testMetaPrefix.hasOwnProperty(key.toLowerCase())){
+            writeFile = false;
+            console.log(key);
+        } else {
+            if(JSON.stringify(metaPrefix[key]) !== JSON.stringify(testMetaPrefix[key])){
+                writeFile = false;
+                console.log(key + ":")
+                console.log(metaPrefix[key])
+            }
+        }
+    }
 
     /*//////////////////////////////////////////////////////////////////////////
     ///
@@ -539,5 +644,7 @@ const getIdeologies = async(url, arr) => {
     {
         fs.writeFileSync('data.js', insertString, 'utf-8');
     }
+
+    console.log("File overwritten: " + writeFile);
     
 })()

@@ -84,6 +84,10 @@
 /*//////////////////////////////////////////////////////////////////////////////
 ///
 /// TO DO:
+///
+/// TODO: Lowercase is being called on prefixAndTerm() selectively:
+/// "Proto-thatcherist Deproudhonianisms: Textual discourse and textual 
+/// Proto-Thatcherist theory"
 /// 
 /// TODO: If any exceptions are ever thrown these are somehow used in the
 /// randomTitle() method
@@ -511,7 +515,7 @@ function twoAdjectives(){
 // Capitalize first letter of every word in some string 'str'
 // returns a string
 function titleCase(str) {
-   var splitStr = str.toLowerCase().split(' ');
+   var splitStr = str.split(' ');
    for (var i = 0; i < splitStr.length; i++) {
        // Assign it back to the array
        splitStr[i] = splitStr[i].charAt(0).toUpperCase() + splitStr[i].substring(1);     
@@ -594,18 +598,18 @@ function replaceLastLetterWith(str,oldLastLetter,newLastLetter){
 	return str + newLastLetter;
 }
 
-function randomIsm() {
+function randomIsm(term) {
 
 	var rand = randomPlusPlus();
 
 	var str = "";
 
-	var chances = 3/8;
+	var chances = 1/3;
 
 	if (rand < chances) {
 
 		if(rand <= (chances * chances)){
-			str += randomArrayIndex([randomArrayIndex(artMovements),randomArrayIndex(ideologies)]);
+			str += capitalizeFirstLetter(randomArrayIndex([randomArrayIndex(artMovements),randomArrayIndex(ideologies)]));
 		}
 		else {
 			str += randomArrayIndex(combIdeologies);
@@ -613,7 +617,7 @@ function randomIsm() {
 		str += "–";
 	}
 
-	return str;
+	return str + capitalizeFirstLetter(term);
 }
 
 function isVowel(c) {
@@ -659,9 +663,9 @@ function prefixAndTerm(prefix, term) {
 
 	var sum = 0;
 
-	if(metaPrefix.hasOwnProperty(prefix)){
+	if(metaPrefix.hasOwnProperty(prefix.toLowerCase())){
 
-		var hyphen = metaPrefix[prefix];
+		var hyphen = metaPrefix[prefix.toLowerCase()];
 
 		if(hyphen.hasOwnProperty(c1)){
 			
@@ -763,13 +767,13 @@ function randomTitleTwo(){
 		str += twoTermTitle(newTerm(), newTerm());
 	}
 	else if(rand > 2/7) {
-		str += twoTermTitle(randomIsm() + randomArrayIndex(ideologies), newTerm());
+		str += twoTermTitle(randomIsm(randomArrayIndex(ideologies)), newTerm());
 	}
 	else if(rand > 1/7) {
-		str += twoTermTitle(randomIsm() + randomArrayIndex(artMovements), newTerm());
+		str += twoTermTitle(randomIsm(randomArrayIndex(artMovements)), newTerm());
 	}
 	else {
-		str += threeTermTitle(randomIsm() + randomArrayIndex(artMovements), randomIsm() + randomArrayIndex(ideologies), newTerm());
+		str += threeTermTitle(randomIsm(randomArrayIndex(artMovements)), randomIsm(randomArrayIndex(ideologies)), newTerm());
 	}
 
 	return str;
