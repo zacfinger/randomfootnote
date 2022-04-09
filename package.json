@@ -18,7 +18,7 @@
   "dependencies": {
     "axios": "^0.21.1",
     "cheerio": "^1.0.0-rc.9",
-    "moment": "^2.22.2",
+    "moment": "^2.29.2",
     "node-pre-gyp": "^0.17.0",
     "pos": "^0.4.2",
     "randombytes": "^2.1.0",
