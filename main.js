@@ -88,6 +88,7 @@
 /// TODO: Lowercase is being called on prefixAndTerm() selectively:
 /// "Proto-thatcherist Deproudhonianisms: Textual discourse and textual 
 /// Proto-Thatcherist theory"
+/// "The Futility Of Context: Subnative american Iranism and Owenist theory"
 /// 
 /// TODO: If any exceptions are ever thrown these are somehow used in the
 /// randomTitle() method
@@ -714,6 +715,10 @@ function prefixAndTerm(prefix, term) {
 		str += "-" + term;
 	}
 	else {
+
+		// TODO: avoid terms like "Postnative american" --> "Postnative American"
+		// if(term.split(" ").length >= 1 && term.charAt(0) == term.charAt(0).toUpperCase()){
+		// }
 		str += term.toLowerCase();
 	}
 
@@ -733,7 +738,7 @@ function randomTitle(){
 
 	if(randomPlusPlus() > 0.5){
 
-		_randomTitle = detectUndefined(capitalizeFirstLetter(
+		return detectUndefined(capitalizeFirstLetter(
 		titleCase(randomCandidTitle()) + ": " + capitalizeFirstLetter(_randomTitle)));
 	}
 
@@ -837,6 +842,8 @@ function newTerm(){
 		str += randomArrayIndex(adjectives) + " " + randomArrayIndex(abstNouns);
 	}
 	else if(rand > 2/6) {
+		// TODO:
+		// str += randomArrayIndex(adjectives) + " " + randomArrayIndex(deptTopicTheoryAdjs) + " theory";
 		str += twoAdjectives() + " theory";
 	}
 	else if(rand > 1/6) {
@@ -908,20 +915,20 @@ function randomName(){
 
 function randomPublication(){
 	var quarterly = "";
-	var rand = Math.random();
+	var rand = randomPlusPlus();
 
 	if(rand >= 2/3){
 		quarterly = "Quarterly";
 	}
 	else if(rand >= 1/3){
-		if(Math.random() >= 4/5){
+		if(randomPlusPlus() >= 4/5){
 			quarterly += "Quarterly ";
 		}
 		
 		quarterly += "Review";
 	}
 	else {
-		if(Math.random() >= 4/5){
+		if(randomPlusPlus() >= 4/5){
 			quarterly += "Quarterly ";
 		}
 
@@ -953,6 +960,7 @@ function readTextFile(file)
 }
 
 function makeGoogleScholarURL(str){
+	str = str.replace("–", "-");
 	var wordArray = str.split(" ");
 	var url = "https://scholar.google.com/scholar?q=";
 	var tempWord = "";
@@ -987,192 +995,172 @@ function makeGoogleScholarURL(str){
 	return url;
 }
 
-if(process.argv[2]!=null || true){
-  // if process.argv[2] is null do not:
-  // open sql database
-  // write to sqlite database
-  // write to since.id
-  // write to word.total
-  // only display constructed message
+///////// USE TWITTER API
 
-  // using process.argv[2] == null ensures previous
-  // deployments will continue to function
-  
-  	console.log("\n");
-	//console.log(prefixAndTerm(randomArrayIndex(prefixes), "establishmentarianism"))
-	console.log(randomTitle());
-  	console.log("\n");
+// global since_id parameter stored in file "since.id"
+// use t.get() to query twitter for keyword citationneeded
+// if since ID file is empty
+// twitter still prcoesses the query
+
+// if json response is not empty
+// take id of first post in the json
+// and the screen name of the first post in the json
+
+// overwrite the file "since.id" with the id of the first post in the JSON
+
+// get the value of file "word.total"
+
+// generate the post:
+// // // @[screen_name]: [random name]. ([random year]) "[random title]." 
+// // // [random publication] vol.[randon number], no. [random number]: pp.
+// // // [total word count before this post]-[total word count after this post]
+// // // [link to google scholar query for keywords in the article title]
+
+// update totalWords with the word count of the tweet
+// overwrite the file "word.total" with new value of totalWords
+
+// post the tweet to Twitter API
+
+// get the most recent ID we tweeted
+var since_id = readTextFile("file://"+pwd+"since.id");
+
+// query Twitter for relevant posts made after since_id
+var tweetGet = t.get('search/tweets',{"q": "citationneeded", 
+									"since_id": since_id});
+
+tweetGet.then(function(value){
+
+console.log(value);
+
+if(value["statuses"][0]!=undefined){
+	
+	// get ID of first post in the JSON
+	var in_reply_to_status_id = value["statuses"][0].id_str;
+
+	// get screen name of first post in the JSON
+	var screen_name = value["statuses"][0]["user"].screen_name;
+
+	// convert Twitter timestamp to UNIX time via momentJS
+	var timeStamp = moment(value["statuses"][0]["created_at"], 
+					"ddd MMM DD HH:mm:ss Z YYYY", "en").unix();
+
+	// open database in memory
+	let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
+		if (err) {
+		errorMessage += err.message;
+		console.error(err.message);
+		}
+		console.log('Connected to the database.');
+	});
+
+	// look for screen name in db
+	db.all(`SELECT * FROM screen_names`, (err, row) => {
+		if(err){
+		errorMessage += err.message;
+		return console.error(err.message);
+		}
+
+		for(var x=0;x<row.length;x++){
+		if(row[x]["user"] == screen_name){
+			// if user matches
+			// (meaning we have tweeted at them before)
+			userFound = true;
+
+			// check time stamp
+			if((timeStamp - row[x]["timestamp"]) >= (72*60*60)){
+
+				// if time stamp is older than 72 h ago
+				// update timestamp in db
+				// else it is too soon to tweet this user
+				db.run(`UPDATE screen_names SET timestamp = ? WHERE user = ?`, [timeStamp, screen_name], function(err) {
+					if (err) {
+					errorMessage += err.message;
+					return console.error(err.message);
+					}
+					console.log("Row(s) updated: " + screen_name);
+					
+				});
+				// and tweet at them
+				tweetAt = true;
+				
+			} else { console.log("too soon to tweet at " + screen_name);}
+			x = row.length + 1;
+			// break out if user found
+		}
+		}
+
+		if(!userFound){
+			// if user is not found
+			// new screen name
+			// we have never tweeted to them before
+			
+			// enter them into db
+			db.run(`INSERT INTO screen_names (user, timestamp) VALUES(?, ?)`, [screen_name,timeStamp], function(err) {
+				if (err) {
+					errorMessage += err.message;
+					return console.log(err.message);
+				}
+				// get the last insert id
+				//console.log(`A row has been inserted with rowid ${this.lastID}`);
+			});
+
+			// and tweet at them
+			tweetAt = true;
+		}
+
+		if(tweetAt){
+		// black list maintained before the sqlite3 implementation
+		// users once stored here are now stored in the sqlite3 database
+		// may consider loading from file instead if needed again
+		/*if(screen_name != "user1" &&
+			screen_name != "user2" &&
+			screen_name != "user3"){*/
+
+			totalWords = readTextFile("file://"+pwd+"word.total");
+
+			var message = "@" + screen_name + ": " + randomName() + " (" + randomYear() + ") \"" 
+						+ randomTitle() + ".\" " + randomPublication() + " vol. " 
+						+ (volumeNumber + 2) + ", no. " + (issueNumber + 1) + ": pp." + totalWords + "-";
+
+			totalWords = Number(totalWords) + message.split(" ").length - 1;
+
+			fs.writeFile(pwd+"word.total", totalWords, function(err) { 
+				if(err) { console.log(err.message); }
+			});
+
+			message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*/;
+
+			console.log(message);
+
+			t.post('statuses/update',{"status": message, "in_reply_to_status_id": in_reply_to_status_id,
+			"auto_populate_reply_metadata": true}, function(req, res) {
+					//console.log(res);
+
+					
+			});
+
+			// overwrite value of file "since.id"
+			// with ID of post we tweeted at
+			fs.writeFile(pwd+"since.id", in_reply_to_status_id, function(err) { 
+				if(err) { console.log(err.message); }
+			});
+		//}
+		}
+		
+	});
+
+	// close the database connection
+	db.close((err) => {
+		if (err) {
+
+		return console.error(err.message);
+		}
+		console.log('Close the database connection.');
+	});
+
+} else {
+	console.log("no recent tweets matching query");
 }
-else 
-{
 
-  ///////// USE TWITTER API
-
-  // global since_id parameter stored in file "since.id"
-  // use t.get() to query twitter for keyword citationneeded
-  // if since ID file is empty
-  // twitter still prcoesses the query
-
-  // if json response is not empty
-  // take id of first post in the json
-  // and the screen name of the first post in the json
-
-  // overwrite the file "since.id" with the id of the first post in the JSON
-
-  // get the value of file "word.total"
-
-  // generate the post:
-  // // // @[screen_name]: [random name]. ([random year]) "[random title]." 
-  // // // [random publication] vol.[randon number], no. [random number]: pp.
-  // // // [total word count before this post]-[total word count after this post]
-  // // // [link to google scholar query for keywords in the article title]
-
-  // update totalWords with the word count of the tweet
-  // overwrite the file "word.total" with new value of totalWords
-
-  // post the tweet to Twitter API
-
-  // get the most recent ID we tweeted
-  var since_id = readTextFile("file://"+pwd+"since.id");
-
-  // query Twitter for relevant posts made after since_id
-  var tweetGet = t.get('search/tweets',{"q": "citationneeded", 
-                                        "since_id": since_id});
-
-  tweetGet.then(function(value){
-
-  	console.log(value);
-
-  	if(value["statuses"][0]!=undefined){
-  		
-  		// get ID of first post in the JSON
-  		var in_reply_to_status_id = value["statuses"][0].id_str;
-
-  		// get screen name of first post in the JSON
-  		var screen_name = value["statuses"][0]["user"].screen_name;
-
-  		// convert Twitter timestamp to UNIX time via momentJS
-  		var timeStamp = moment(value["statuses"][0]["created_at"], 
-  						"ddd MMM DD HH:mm:ss Z YYYY", "en").unix();
-
-  		// open database in memory
-  		let db = new sqlite3.Database(dbPath, sqlite3.OPEN_READWRITE, (err) => {
-  		  if (err) {
-  		  	errorMessage += err.message;
-  		    console.error(err.message);
-  		  }
-  		  console.log('Connected to the database.');
-  		});
-
-  		// look for screen name in db
-  		db.all(`SELECT * FROM screen_names`, (err, row) => {
-  		  if(err){
-  		  	errorMessage += err.message;
-  		    return console.error(err.message);
-  		  }
-
-  		  for(var x=0;x<row.length;x++){
-  		  	if(row[x]["user"] == screen_name){
-  		  		// if user matches
-  		  		// (meaning we have tweeted at them before)
-  		  		userFound = true;
-
-  		  		// check time stamp
-  		  		if((timeStamp - row[x]["timestamp"]) >= (72*60*60)){
-
-  		  			// if time stamp is older than 72 h ago
-  		  			// update timestamp in db
-  		  			// else it is too soon to tweet this user
-  		  			db.run(`UPDATE screen_names SET timestamp = ? WHERE user = ?`, [timeStamp, screen_name], function(err) {
-  			          if (err) {
-  			            errorMessage += err.message;
-  		    			return console.error(err.message);
-  			          }
-  			          console.log("Row(s) updated: " + screen_name);
-  			           
-  			        });
-  			        // and tweet at them
-  			        tweetAt = true;
-  			        
-  		  		} else { console.log("too soon to tweet at " + screen_name);}
-  		  		x = row.length + 1;
-  		  		// break out if user found
-  		  	}
-  		  }
-
-  		  if(!userFound){
-  		  		// if user is not found
-  		      	// new screen name
-  		      	// we have never tweeted to them before
-  		        
-  		      	// enter them into db
-  		      	db.run(`INSERT INTO screen_names (user, timestamp) VALUES(?, ?)`, [screen_name,timeStamp], function(err) {
-  		        	if (err) {
-  		        		errorMessage += err.message;
-  		    			return console.log(err.message);
-  		        	}
-  		        	// get the last insert id
-  		        	//console.log(`A row has been inserted with rowid ${this.lastID}`);
-  		      });
-
-  		      // and tweet at them
-  		      tweetAt = true;
-  		  }
-
-  		  if(tweetAt){
-  		    // black list maintained before the sqlite3 implementation
-  		    // users once stored here are now stored in the sqlite3 database
-  		    // may consider loading from file instead if needed again
-  			/*if(screen_name != "user1" &&
-  			   screen_name != "user2" &&
-  			   screen_name != "user3"){*/
-
-  				totalWords = readTextFile("file://"+pwd+"word.total");
-
-  				var message = "@" + screen_name + ": " + randomName() + " (" + randomYear() + ") \"" 
-  							+ randomTitle() + ".\" " + randomPublication() + " vol. " 
-  							+ (volumeNumber + 2) + ", no. " + (issueNumber + 1) + ": pp." + totalWords + "-";
-
-  				totalWords = Number(totalWords) + message.split(" ").length - 1;
-
-  				fs.writeFile(pwd+"word.total", totalWords, function(err) { 
-  					if(err) { console.log(err.message); }
-  				});
-
-  				message += totalWords + ". " + makeGoogleScholarURL(_randomTitle)/* + " #citationneeded"*/;
-
-  				console.log(message);
-
-  				t.post('statuses/update',{"status": message, "in_reply_to_status_id": in_reply_to_status_id,
-  				"auto_populate_reply_metadata": true}, function(req, res) {
-  				        //console.log(res);
-
-  				        
-  				});
-
-  				// overwrite value of file "since.id"
-  				// with ID of post we tweeted at
-  				fs.writeFile(pwd+"since.id", in_reply_to_status_id, function(err) { 
-  					if(err) { console.log(err.message); }
-  				});
-  			//}
-  		  }
-  		  
-  		});
-
-  		// close the database connection
-  		db.close((err) => {
-  		  if (err) {
-
-  		    return console.error(err.message);
-  		  }
-  		  console.log('Close the database connection.');
-  		});
-
-  	} else {
-  		console.log("no recent tweets matching query");
-  	}
-
-  });
-}
+});
 
